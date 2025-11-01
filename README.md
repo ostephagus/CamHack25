@@ -9,5 +9,8 @@ Use WPF to create a windows app that allows the user to search for a specific mo
 ### API Calls
 Given the molecule name, return search results from the PubChem REST API. Once the user selects the specific molecule, use the API again to get the data on the molecule.
 
+### Molecule-to-grid
+Use a best-fit algorithm to convert the molecule position data to a grid of road intersections. Apply appropriate scaling/rotations to get a good fit.
+
 ### Visualisation
-Given the data about the molecule, transform these into mapping coordinates using the 2D hexagons visualisation for compounds.
+Given the set of coordinates of intersections, plot the points on a map.
