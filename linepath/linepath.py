@@ -18,6 +18,21 @@ else:
     from lxml.etree import parse
 
 
+# weighting for the 'distance from straight line' part of heuristic
+ALPHA_H = 2
+# weighting for the 'distance to end' part of heuristic
+BETA_H = 0.1
+# In general, lower value encourage more exploration (0 = Dijkstra)
+#  and higher values encourage immediate progress
+#  towards the goal (at the cost of a possibly-not-best path)
+
+# weighting for the 'distance from straight line' part of G-cost. Note that
+# this is applied on every node so weight should be pretty low
+ALPHA_G = 0.1
+# weighting for the 'distance' part of G-cost
+BETA_G = 1
+
+
 def distance(v1: tuple[float, float], v2: tuple[float, float]):
     return math.hypot(v2[0] - v1[0], v2[1] - v1[1])
 
@@ -46,7 +61,7 @@ def line_point_dist(lpos: tuple[float, float], ldir: tuple[float, float],
     a = dy
     b = -dx
     c = - dy*px + dx*py
-    return (a*x+b*y+c)/math.hypot(a, b)
+    return abs((a*x+b*y+c)/math.hypot(a, b))
 
 
 @dataclasses.dataclass(slots=True)
@@ -65,6 +80,15 @@ class XNode:
     def pos(self):
         return self.lat, self.lon
 
+    def set_prev_maybe(self, inst: AStar, prev: XNode):
+        new_gcost = (prev.gcost + self.distance(prev) * BETA_G
+                     + inst.line.dist(self.pos) * ALPHA_G)
+        if new_gcost < self.gcost:
+            self.gcost = new_gcost
+            self.prev = prev
+            return True
+        return False
+
     # @property
     # def fcost(self):
     #     return self.hcost + self.gcost
@@ -75,8 +99,8 @@ class XNode:
     #         (self.lat, self.lon), INST.dest_pos)
 
     def hcosti(self, inst: AStar):
-        return inst.line.dist((self.lat, self.lon)) * 10 + distance(
-            (self.lat, self.lon), inst.dest_pos)
+        return inst.line.dist(self.pos) * ALPHA_H + distance(
+            (self.lat, self.lon), inst.dest_pos) * BETA_H
 
     def fcosti(self, inst: AStar):
         return self.gcost + self.hcosti(inst)
@@ -244,7 +268,7 @@ def findnode(lat: int, lon: int):
 
 
 def filternodes(line: Line):
-    maxdist = line.length() / 2  # TODO adjust?
+    maxdist = line.length() / 4  # TODO adjust?
     nds = {k: n for k, n in nodes.items()
            if line.dist((n.lat, n.lon)) < maxdist}
     for n in nds.values():
@@ -272,9 +296,7 @@ class AStar:
             for nh in curr.conns:
                 if nh in self.closed:
                     continue
-                if curr.gcost + curr.distance(nh) < nh.gcost:
-                    nh.gcost = curr.gcost + curr.distance(nh)
-                    nh.prev = curr
+                nh.set_prev_maybe(self, curr)
                 self.open[nh] = nh.fcosti(self)  # Update or add
             self.closed.add(curr)
         path = []
@@ -288,6 +310,12 @@ class AStar:
 t3 = time.time()
 print('Finding a path...')
 INST = AStar(Line((35.1877936, -106.6667822), (35.1266192, -106.6150654)))  # TODO!!!!!!!
-print(*[(n.ref, n.lat, n.lon) for n in INST.run()], sep='\n', end='\n\n\n')
+result = INST.run()
+print(*[(n.lat, n.lon) for n in result], sep=',', end='\n\n\n')
+with open('_temp_result.txt', 'w') as f:
+    i = 0
+    while i < len(result):
+        print(f'[{",".join([repr((n.lat, n.lon)) for n in result[i:i+998]])}]', file=f)
+        i += 998
 t4 = time.time()
-print(f'Found path in {t4 - t3:.2f}s:')
+print(f'Found path in {t4 - t3:.2f}s')
