@@ -195,7 +195,14 @@ def best_subset_assignment(A, B, optimize_scale=True):
 albPoints = best_subset_assignment(inputCoords,gridCoords)[0]
 
 with open("albCoordsOfMolecule.txt","w+") as f:
-    f.write(str(albPoints))
+    for i in albPoints:
+        f.write(str(float(i[0]))+" "+str(float(i[1]))+"\n")
+
+## Adjacency list for the bonds
+bondData = [[{int(j):i['bonds'][j]['order']} for j in i['bonds']] for i in inputAtoms]
+
+with open("albBondData.txt", "w+") as f:
+    f.write(str(bondData))
 
 #Idea: Have some way to represent different elements differently?
 for i in range(len(albPoints)):
