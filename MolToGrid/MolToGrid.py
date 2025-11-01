@@ -1,7 +1,7 @@
 import json
 import numpy as np
 from scipy.spatial import distance_matrix
-from scipy.optimize import linear_sum_assignment
+from scipy.optimize import linear_sum_assignment, minimize_scalar
 import ast
 import matplotlib.pyplot as plt
 
@@ -118,10 +118,6 @@ inputCoords = np.array(inputCoords)
 
 #     return subset, row_ind, col_ind, mean_error, translation
 
-from scipy.spatial import distance_matrix
-from scipy.optimize import linear_sum_assignment, minimize_scalar
-import numpy as np
-
 def best_subset_assignment(A, B, optimize_scale=True):
     """
     Find the subset of B that best matches A using the Hungarian algorithm,
@@ -187,7 +183,7 @@ def best_subset_assignment(A, B, optimize_scale=True):
     translation = A_centroid - (B_centroid * best_scale)
 
     # Subset in original coordinate space
-    subset = B[col_ind] * best_scale + translation
+    subset = B[col_ind]
 
     return subset, row_ind, col_ind, mean_error, translation, best_scale
 
