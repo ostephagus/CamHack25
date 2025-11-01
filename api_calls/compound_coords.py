@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import dataclasses
+import json
 from dataclasses import dataclass, field
 
 import requests
@@ -77,7 +78,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('name', type=str)
     ns = ap.parse_args()
-    print(get_data(ns.name))
+    print(json.dumps(get_data(ns.name)))
 
 
 if __name__ == '__main__':
