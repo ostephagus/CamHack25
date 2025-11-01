@@ -1,0 +1,338 @@
+[
+  {
+    "idx": 0,
+    "element": 8,
+    "x": 3.7321,
+    "y": -0.06,
+    "bonds": {
+      "4": {
+        "order": 1,
+        "style": ""
+      },
+      "11": {
+        "order": 1,
+        "style": ""
+      }
+    }
+  },
+  {
+    "idx": 1,
+    "element": 8,
+    "x": 6.3301,
+    "y": 1.44,
+    "bonds": {
+      "10": {
+        "order": 1,
+        "style": ""
+      },
+      "20": {
+        "order": 1,
+        "style": ""
+      }
+    }
+  },
+  {
+    "idx": 2,
+    "element": 8,
+    "x": 4.5981,
+    "y": 1.44,
+    "bonds": {
+      "10": {
+        "order": 2,
+        "style": ""
+      }
+    }
+  },
+  {
+    "idx": 3,
+    "element": 8,
+    "x": 2.866,
+    "y": -1.56,
+    "bonds": {
+      "11": {
+        "order": 2,
+        "style": ""
+      }
+    }
+  },
+  {
+    "idx": 4,
+    "element": 6,
+    "x": 4.5981,
+    "y": -0.56,
+    "bonds": {
+      "0": {
+        "order": 1,
+        "style": ""
+      },
+      "5": {
+        "order": 1,
+        "style": "aromatic"
+      },
+      "6": {
+        "order": 2,
+        "style": "aromatic"
+      }
+    }
+  },
+  {
+    "idx": 5,
+    "element": 6,
+    "x": 5.4641,
+    "y": -0.06,
+    "bonds": {
+      "4": {
+        "order": 1,
+        "style": "aromatic"
+      },
+      "7": {
+        "order": 2,
+        "style": "aromatic"
+      },
+      "10": {
+        "order": 1,
+        "style": ""
+      }
+    }
+  },
+  {
+    "idx": 6,
+    "element": 6,
+    "x": 4.5981,
+    "y": -1.56,
+    "bonds": {
+      "4": {
+        "order": 2,
+        "style": "aromatic"
+      },
+      "8": {
+        "order": 1,
+        "style": "aromatic"
+      },
+      "13": {
+        "order": 1,
+        "style": ""
+      }
+    }
+  },
+  {
+    "idx": 7,
+    "element": 6,
+    "x": 6.3301,
+    "y": -0.56,
+    "bonds": {
+      "5": {
+        "order": 2,
+        "style": "aromatic"
+      },
+      "9": {
+        "order": 1,
+        "style": "aromatic"
+      },
+      "14": {
+        "order": 1,
+        "style": ""
+      }
+    }
+  },
+  {
+    "idx": 8,
+    "element": 6,
+    "x": 5.4641,
+    "y": -2.06,
+    "bonds": {
+      "6": {
+        "order": 1,
+        "style": "aromatic"
+      },
+      "9": {
+        "order": 2,
+        "style": "aromatic"
+      },
+      "15": {
+        "order": 1,
+        "style": ""
+      }
+    }
+  },
+  {
+    "idx": 9,
+    "element": 6,
+    "x": 6.3301,
+    "y": -1.56,
+    "bonds": {
+      "7": {
+        "order": 1,
+        "style": "aromatic"
+      },
+      "8": {
+        "order": 2,
+        "style": "aromatic"
+      },
+      "16": {
+        "order": 1,
+        "style": ""
+      }
+    }
+  },
+  {
+    "idx": 10,
+    "element": 6,
+    "x": 5.4641,
+    "y": 0.94,
+    "bonds": {
+      "1": {
+        "order": 1,
+        "style": ""
+      },
+      "2": {
+        "order": 2,
+        "style": ""
+      },
+      "5": {
+        "order": 1,
+        "style": ""
+      }
+    }
+  },
+  {
+    "idx": 11,
+    "element": 6,
+    "x": 2.866,
+    "y": -0.56,
+    "bonds": {
+      "0": {
+        "order": 1,
+        "style": ""
+      },
+      "3": {
+        "order": 2,
+        "style": ""
+      },
+      "12": {
+        "order": 1,
+        "style": ""
+      }
+    }
+  },
+  {
+    "idx": 12,
+    "element": 6,
+    "x": 2,
+    "y": -0.06,
+    "bonds": {
+      "11": {
+        "order": 1,
+        "style": ""
+      },
+      "17": {
+        "order": 1,
+        "style": ""
+      },
+      "18": {
+        "order": 1,
+        "style": ""
+      },
+      "19": {
+        "order": 1,
+        "style": ""
+      }
+    }
+  },
+  {
+    "idx": 13,
+    "element": 1,
+    "x": 4.0611,
+    "y": -1.87,
+    "bonds": {
+      "6": {
+        "order": 1,
+        "style": ""
+      }
+    }
+  },
+  {
+    "idx": 14,
+    "element": 1,
+    "x": 6.8671,
+    "y": -0.25,
+    "bonds": {
+      "7": {
+        "order": 1,
+        "style": ""
+      }
+    }
+  },
+  {
+    "idx": 15,
+    "element": 1,
+    "x": 5.4641,
+    "y": -2.68,
+    "bonds": {
+      "8": {
+        "order": 1,
+        "style": ""
+      }
+    }
+  },
+  {
+    "idx": 16,
+    "element": 1,
+    "x": 6.8671,
+    "y": -1.87,
+    "bonds": {
+      "9": {
+        "order": 1,
+        "style": ""
+      }
+    }
+  },
+  {
+    "idx": 17,
+    "element": 1,
+    "x": 2.31,
+    "y": 0.4769,
+    "bonds": {
+      "12": {
+        "order": 1,
+        "style": ""
+      }
+    }
+  },
+  {
+    "idx": 18,
+    "element": 1,
+    "x": 1.4631,
+    "y": 0.25,
+    "bonds": {
+      "12": {
+        "order": 1,
+        "style": ""
+      }
+    }
+  },
+  {
+    "idx": 19,
+    "element": 1,
+    "x": 1.69,
+    "y": -0.5969,
+    "bonds": {
+      "12": {
+        "order": 1,
+        "style": ""
+      }
+    }
+  },
+  {
+    "idx": 20,
+    "element": 1,
+    "x": 6.3301,
+    "y": 2.06,
+    "bonds": {
+      "1": {
+        "order": 1,
+        "style": ""
+      }
+    }
+  }
+]
