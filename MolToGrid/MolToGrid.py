@@ -198,7 +198,16 @@ with open("albCoordsOfMolecule.txt","w+") as f:
     f.write(str(albPoints))
 
 #Idea: Have some way to represent different elements differently?
-plt.scatter(albPoints[:,0],albPoints[:,1])
+for i in range(len(albPoints)):
+   coords1 = albPoints[i]
+   atom1 =inputAtoms[i]
+   nodeNum=atom1['idx']
+   for j in atom1['bonds']:
+        j=int(j)
+        if j>nodeNum:
+            atom2 = inputAtoms[j]
+            coords2 = albPoints[j]
+            plt.plot([coords1[0],coords2[0]],[coords1[1],coords2[1]],'ro-')
 # for atom1 in inputAtoms:
 #    nodeNum=atom1['idx']
 #    atom1Coords = [atom1['x'],atom1['y']]
