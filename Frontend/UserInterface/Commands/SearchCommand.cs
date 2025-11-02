@@ -55,7 +55,7 @@ namespace UserInterface.Commands
             if (parameter is string searchText)
             {
                 List<string> searchResults = GetSearchResults(searchText);
-                parentApp.SwitchWindow(new SearchResultsScreen(), new SearchResultsScreenVM(searchResults));
+                parentApp.SwitchWindow(new SearchResultsScreen(), new SearchResultsScreenVM(searchResults, parentApp));
             }
         }
     }
