@@ -10,7 +10,7 @@ with open('sample_data.json','r') as f:
     inputAtoms = json.load(f)
 
 print("reading")
-gridCoords = np.loadtxt("albNP.txt",dtype=float)
+gridCoords = np.loadtxt("albNPFiltered.txt",dtype=float)
 print("done reading")
 
 # with open('albuquerque.json','r') as f:
@@ -184,11 +184,93 @@ def best_subset_assignment(A, B, optimize_scale=True):
 
     # Subset in original coordinate space
     subset = B[col_ind]
+    print(mean_error)
 
-    return subset, row_ind, col_ind, mean_error, translation, best_scale
+    return subset
+# def best_subset_assignment(A, B, optimize_scale=True, optimize_rotation=True):
+#     """
+#     Find the subset of B that best matches A using the Hungarian algorithm,
+#     accounting for translation, scaling, and (optionally) rotation.
+
+#     Parameters
+#     ----------
+#     A : (m, 2) array
+#         Smaller set of coordinates.
+#     B : (n, 2) array
+#         Larger set of coordinates (n >= m).
+#     optimize_scale : bool
+#         If True, find the best uniform scale factor.
+#     optimize_rotation : bool
+#         If True, find the best rotation matrix via SVD.
+
+#     Returns
+#     -------
+#     result : dict
+#         {
+#             "subset": (m, 2) array — subset of B aligned to A (ordered),
+#             "mapping": dict — A_index → B_index,
+#             "rotation": (2, 2) array — optimal rotation matrix,
+#             "scale": float — optimal scale,
+#             "translation": (2,) array — translation vector,
+#             "mean_error": float — mean matching distance
+#         }
+#     """
+
+#     # Center both sets
+#     A_centroid = A.mean(axis=0)
+#     B_centroid = B.mean(axis=0)
+#     A_centered = A - A_centroid
+#     B_centered = B - B_centroid
+
+#     # --- Optimize for scale ---
+#     def mean_error_for_scale(s):
+#         B_scaled = B_centered * s
+#         R = np.eye(2)
+#         if optimize_rotation:
+#             # Estimate rotation via SVD between A and scaled B
+#             M = A_centered.T @ B_scaled
+#             U, _, Vt = np.linalg.svd(M)
+#             R = U @ Vt
+#         B_transformed = (B_scaled @ R.T)
+#         D = distance_matrix(A_centered, B_transformed)
+#         row_ind, col_ind = linear_sum_assignment(D)
+#         return D[row_ind, col_ind].mean()
+
+#     if optimize_scale:
+#         res = minimize_scalar(mean_error_for_scale, bounds=(0.1, 10), method='bounded')
+#         best_scale = res.x
+#     else:
+#         best_scale = 1.0
+
+#     # --- Compute final rotation ---
+#     B_scaled = B_centered * best_scale
+#     if optimize_rotation:
+#         M = A_centered.T @ B_scaled
+#         U, _, Vt = np.linalg.svd(M)
+#         R = U @ Vt
+#         # Correct for reflection (if determinant < 0)
+#         if np.linalg.det(R) < 0:
+#             U[:, -1] *= -1
+#             R = U @ Vt
+#     else:
+#         R = np.eye(2)
+
+#     # Apply transform and run Hungarian algorithm
+#     B_transformed = (B_scaled @ R.T)
+#     D = distance_matrix(A_centered, B_transformed)
+#     row_ind, col_ind = linear_sum_assignment(D)
+#     mean_error = D[row_ind, col_ind].mean()
+
+#     # Compute translation in original coordinates
+#     translation = A_centroid - (B_centroid @ R.T) * best_scale
+
+#     # Subset in original coordinates, ordered to match A
+#     subset = B[col_ind]
+
+#     return subset
 
 # The points in albuquerque that represent the molecule
-albPoints = best_subset_assignment(inputCoords,gridCoords)[0]
+albPoints = best_subset_assignment(inputCoords,gridCoords)
 
 with open("albCoordsOfMolecule.txt","w+") as f:
     for i in albPoints:
