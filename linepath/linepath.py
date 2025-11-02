@@ -362,11 +362,11 @@ HTDOC = '''
     var pts = %(paths)s;
     var els = %(els)s;
     for (const latlngs of pts) {
-      var polyline = L.polyline(latlngs, {color: 'red'}).addTo(map);
+      var polyline = L.polyline(latlngs, {color: 'black'}).addTo(map);
       //var polyline = L.polyline([latlngs[0], latlngs.at(-1)], {color: 'blue', dashArray: '4,10'}).addTo(map);
     }
     for (const [latlng, color] of els) {
-      L.circleMarker(latlng, {radius: 10, color: 'red', fillColor: 'red', fillOpacity: 1}).addTo(map);
+      L.circleMarker(latlng, {radius: 10, color: color, fillColor: color, fillOpacity: 0.5}).addTo(map);
     }
   </script>
 </body>
@@ -382,6 +382,8 @@ def place_to_xml(place):
 
 
 def find_paths(place, data):
+    with open("linepath/cpk.json") as f:
+        element_colour_map = json.load(f)
     paths: set[frozenset[tuple[float, float]]]
     xml = place_to_xml(place)
     if place in NODE_MEM:
@@ -400,7 +402,10 @@ def find_paths(place, data):
     print('Finding path... 0%')
     results = []
     # TODO: replace str(...) with color
-    els = [(xn.pos, str(xn_to_elem[xn])) for xn in xn_to_elem.keys()]
+    els = [(xn.pos, f"rgb({element_colour_map[str(xn_to_elem[xn])][0]}, {element_colour_map[str(xn_to_elem[xn])][1]}, {element_colour_map[str(xn_to_elem[xn])][2]})") for xn in xn_to_elem.keys()]
+    print("")
+    print(els)
+    input("")
     for i, (st, ed) in enumerate(paths):
         path = findpath(nodes, point_to_xnode[st], point_to_xnode[ed])
         results.append(path)
