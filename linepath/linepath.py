@@ -268,10 +268,10 @@ else:
     print(f'Read in {t6 - t5:.2f}s')
 
 
-def findnode(fns, lat: int, lon: int):
+def findnode(fns, lat: float, lon: float):
     b = None
     bd = 1e10
-    for n in fns.values():
+    for n in fns:
         cd = math.hypot(n.lat - lat, n.lon - lon)
         if b is None or cd < bd:
             bd = cd
@@ -302,21 +302,24 @@ class AStar:
         self.open = pqdict.pqdict.minpq({self.start: self.start.fcosti(self)})
         self.closed = set()
 
-
     def run(self) -> list[XNode]:  # TODO this is slow!
-        while True:
-            curr: XNode = self.open.pop()
-            self.closed.add(curr)
-            if curr == self.dest:
-                break
-            for nh in curr.conns:
-                if nh in self.closed or nh == curr:
-                    continue
-                nh.set_prev_maybe(self, curr)
-                self.open[nh] = nh.fcosti(self)  # Update or add
+        try:
+            while True:
+                curr: XNode = self.open.pop()
+                self.closed.add(curr)
+                if curr == self.dest:
+                    break
+                for nh in curr.conns:
+                    if nh in self.closed or nh == curr:
+                        continue
+                    nh.set_prev_maybe(self, curr)
+                    self.open[nh] = nh.fcosti(self)  # Update or add
+        except pqdict.Empty:
+            end = findnode(self.closed, self.dest.lat, self.dest.lon)
+        else:
+            end = self.dest
         path = []
         pset = set()
-        end = self.dest
         while end and end not in pset:
             path.append(end)
             pset.add(end)
@@ -369,7 +372,7 @@ def find_paths(data):
     point_to_xnode = {}
     for crd in [q for w in paths for q in w]:
         if crd not in point_to_xnode:
-            point_to_xnode[crd] = findnode(nodes, *crd)
+            point_to_xnode[crd] = findnode(nodes.values(), *crd)
     print('Finding path... 0%')
     results = []
     for i, (st, ed) in enumerate(paths):
