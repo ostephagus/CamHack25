@@ -1,6 +1,4 @@
-﻿using System.Configuration;
-using System.Data;
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Controls;
 using UserInterface.Views;
 using UserInterface.ViewModels;
@@ -12,15 +10,27 @@ namespace UserInterface
     /// </summary>
     public partial class App : Application
     {
+#pragma warning disable CS8618
         MainWindow mainWindow;
         private UserControl currentControl;
         private ViewModelBase currentViewModel;
+        private PythonManager pythonManager;
+        //private string currentMolecule;
+        //private List<string> searchResults;
+#pragma warning restore CS8618
+
+        public PythonManager PythonManager => pythonManager;
 
         private void Application_Startup(object sender, StartupEventArgs e)
         {
             mainWindow = new MainWindow();
+            pythonManager = new($"{Paths.BaseDirectory}/../wrapper_server.py");
+            pythonManager.StartProcess();
 
-            SwitchWindow(new Views.SearchScreen(), new SearchScreenVM(new Commands.SearchCommand(this)));
+            //currentMolecule = "";
+            //searchResults = new List<string>();
+
+            SwitchWindow(new SearchScreen(), new SearchScreenVM(new Commands.SearchCommand(this)));
 
             mainWindow.Show();
         }
@@ -31,6 +41,11 @@ namespace UserInterface
             currentViewModel = newVM;
             currentControl.DataContext = currentViewModel;
             mainWindow.SetView(currentControl);
+        }
+
+        private void Application_Exit(object sender, ExitEventArgs e)
+        {
+            pythonManager.StopProcess();
         }
     }
 

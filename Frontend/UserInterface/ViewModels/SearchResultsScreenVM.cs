@@ -13,8 +13,13 @@ namespace UserInterface.ViewModels
 
         private SubmitCommand submitCommand;
 
+        private BackCommand backCommand;
+
+        private PythonManager pythonManager;
+
         private string selectedMolecule;
-        public SubmitCommand SubmitCommand { get { return submitCommand; } }
+        public SubmitCommand SubmitCommand => submitCommand;
+        public BackCommand BackCommand => backCommand;
         public string SelectedMolecule
         { 
             get => selectedMolecule;
@@ -22,6 +27,7 @@ namespace UserInterface.ViewModels
             {
                 selectedMolecule = value;
                 submitCommand.OnCanExecuteChanged(this, new EventArgs());
+                OnPropertyChanged(this, nameof(SelectedMolecule));
             }
         }
 
@@ -36,11 +42,13 @@ namespace UserInterface.ViewModels
         }
 
 
-        public SearchResultsScreenVM(List<string> searchResults)
+        public SearchResultsScreenVM(List<string> searchResults, App parentApp)
         {
             this.searchResults = searchResults;
-            submitCommand = new SubmitCommand(this);
             selectedMolecule = "";
+            pythonManager = parentApp.PythonManager;
+            submitCommand = new SubmitCommand(pythonManager);
+            backCommand = new BackCommand(parentApp);
         }
     }
 }
