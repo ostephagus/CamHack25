@@ -711,3 +711,6 @@ pyrightconfig.json
 
 # End of https://www.toptal.com/developers/gitignore/api/python,pycharm
 
+## Molecule data is regenerated every time
+MolToGrid/albBondData.txt
+MolToGrid/albCoordsOfMolecule.txt

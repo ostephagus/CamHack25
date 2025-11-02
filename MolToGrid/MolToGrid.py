@@ -290,9 +290,12 @@ def MolToGrid(data, plotting=False):
 
     ## Adjacency list for the bonds
     bondData = [[{int(j):i['bonds'][j]['order']} for j in i['bonds']] for i in inputAtoms]
-
     with open("MolToGrid/albBondData.txt", "w+") as f:
         f.write(str(bondData))
+
+    elementData = [i['element'] for i in inputAtoms]
+    with open("MolToGrid/albElementData.txt", "w+") as f:
+        f.write(str(elementData))
 
     if plotting:
     # #Idea: Have some way to represent different elements differently?
