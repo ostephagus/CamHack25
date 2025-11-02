@@ -10,7 +10,7 @@ tolerance = 0
 
 # Trying to see just how tight we can keep the coordinates around Alberquerque while still getting a nice graph
 while tolerance < 2.625:
-    tolerance += 0.105
+    tolerance += 0.2625
     albFiltered = []
 
     for i in alb:
