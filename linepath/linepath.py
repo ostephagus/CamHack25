@@ -253,7 +253,7 @@ def load_nodes(xml: str):
         t6 = time.time()
         print(f'Written in {t6 - t5:.2f}s')
     else:
-        print('Reading Albuquerque...')
+        print('Reading Albuquerque...', flush=True)
         t5 = time.time()
         with (open(R / f'linepath/.nodes-cache{extra}-0.bin', 'rb') as f0,
               open(R / f'linepath/.nodes-cache{extra}-1.bin', 'rb') as f1):
@@ -284,6 +284,9 @@ def filternodes(nodes, line: Line):
     return nds
 
 
+# MOD_NODES = set()
+
+
 @dataclasses.dataclass()
 class AStar:
     def __init__(self, nodes, a: XNode, b: XNode):
@@ -293,6 +296,7 @@ class AStar:
         self.line = Line(a.pos, b.pos)
         self.start = a
         self.start.gcost = 0  # by defn.
+        # MOD_NODES.add()
         self.dest = b
         self.dest_pos = (self.dest.lat, self.dest.lon)
         self.open = pqdict.pqdict.minpq({self.start: self.start.fcosti(self)})
