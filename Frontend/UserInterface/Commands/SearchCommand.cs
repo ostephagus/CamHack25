@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using Newtonsoft.Json;
+using ProjectInfo;
 using UserInterface.ViewModels;
 using UserInterface.Views;
 
@@ -30,21 +31,21 @@ namespace UserInterface.Commands
         }
         private static List<string> GetSearchResults(string searchText)
         {
-            ProcessStartInfo startInfo = new ProcessStartInfo();
-            startInfo.WindowStyle = ProcessWindowStyle.Hidden;
-            startInfo.FileName = "python.exe";
-            startInfo.Arguments = $"../../../../../api_calls/spell_suggest.py {searchText}";
-            startInfo.UseShellExecute = false;
-            startInfo.RedirectStandardOutput = true;
-
-            List<string> searchResults = new List<string>();
-            using (Process cmdProcess = Process.Start(startInfo))
+            RunPyScriptCommand scriptRunner = new RunPyScriptCommand($"{BuildInfo.SolutionDir}/../api_calls/spell_suggest.py");
+            if (!scriptRunner.CanExecute(null))
             {
-                using (StreamReader reader = cmdProcess.StandardOutput)
-                {
-                    string result = reader.ReadToEnd();
-                    return JsonConvert.DeserializeObject<List<string>>(result);
-                }
+                MessageBox.Show("Python file not attached.");
+                throw new ArgumentException("Python file not found.");
+            }
+            string result = scriptRunner.Execute(searchText);
+            List<string>? JsonResult = JsonConvert.DeserializeObject<List<string>>(result);
+            if (JsonResult is null || JsonResult.Count == 0)
+            {
+                throw new ArgumentException("No molecules found.");
+            }
+            else
+            {
+                return JsonResult;
             }
         }
 

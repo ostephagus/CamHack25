@@ -19,5 +19,14 @@
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
   </ItemGroup>
+  <Target Name="InjectSolutionDir" BeforeTargets="BeforeBuild">
+      <WriteLinesToFile
+          File="Generated/SolutionInfo.cs"
+          Lines='namespace ProjectInfo%0D%0A{%0D%0A    public static class BuildInfo%0D%0A    {%0D%0A        public const string SolutionDir = @&quot;$(SolutionDir)&quot;%3B%0D%0A    }%0D%0A}'
+          Overwrite="true" />
+      <ItemGroup>
+          <Compile Include="Generated/SolutionInfo.cs" />
+      </ItemGroup>
+  </Target>
 
 </Project>

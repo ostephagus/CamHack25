@@ -21,6 +21,6 @@
         </Grid.RowDefinitions>
         <hc:ResizableCentredTextBox Text="Type in the name of a molecule and press Enter." />
         <TextBox x:Name="textBox" Grid.Row="1" Margin="10 10 10 10" FontSize="15" PreviewKeyUp="TextBox_PreviewKeyUp" />
-        <hc:ResizableCentredTextBox Grid.Row="2" Text="{Binding ErrorMessage}" Visibility="{Binding IsError, Converter={StaticResource BoolToVisibilityConverter}}" />
+        <TextBlock Grid.Row="2" Foreground="Red" FontSize="15" Text="{Binding ErrorMessage}" Visibility="{Binding IsError, Converter={StaticResource BoolToVisibilityConverter}}" d:Visibility="Visible" d:Text="Error text" Margin="10 10 10 10" />
     </Grid>
 </UserControl>
