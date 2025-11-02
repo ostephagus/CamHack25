@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import dataclasses
+import functools
 import itertools
 import json
 import math
@@ -220,6 +221,7 @@ class Reader:
         return {n.ref: n for n in nodes}
 
 
+@functools.cache
 def load_nodes(xml: str):
     extra = '' if xml == 'albuquerque.xml' else f'-{xml.removesuffix(".xml")}'
     if UPDATE:
@@ -381,10 +383,7 @@ def place_to_xml(place):
 def find_paths(place, data):
     paths: set[frozenset[tuple[float, float]]]
     xml = place_to_xml(place)
-    if xml in NODE_MEM:
-        nodes = NODE_MEM[xml]
-    else:
-        nodes = NODE_MEM[xml] = load_nodes(xml)
+    node = load_nodes(xml)
     paths, ll2elem = mgrid.MolToGrid(data, is_cam=xml=='cambridge.xml')
     print('Converting nodes...')
     point_to_xnode = {}
