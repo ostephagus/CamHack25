@@ -383,7 +383,7 @@ def place_to_xml(place):
 def find_paths(place, data):
     paths: set[frozenset[tuple[float, float]]]
     xml = place_to_xml(place)
-    node = load_nodes(xml)
+    nodes = load_nodes(xml)
     paths, ll2elem = mgrid.MolToGrid(data, is_cam=xml=='cambridge.xml')
     print('Converting nodes...')
     point_to_xnode = {}
