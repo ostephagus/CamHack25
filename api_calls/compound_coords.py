@@ -72,6 +72,8 @@ def get_coords(full_data: dict):
 def get_data(name: str):
     return get_coords(get_full_data(name))
 
+def getJson(name):
+    return json.dumps(get_data(name))
 
 def main():
     import argparse
