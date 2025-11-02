@@ -3,9 +3,7 @@ from __future__ import annotations
 import dataclasses
 import itertools
 import json
-# import heapq
 import math
-import string
 import struct
 import time
 import typing
@@ -15,6 +13,8 @@ from pathlib import Path
 
 import pqdict
 from typing import TYPE_CHECKING
+
+import mgrid
 
 if TYPE_CHECKING:
     from xml.etree.ElementTree import parse, Element
@@ -79,6 +79,9 @@ class XNode:
 
     def __hash__(self):
         return hash(self.ref)
+
+    def __eq__(self, other):
+        return self.ref == other.ref
 
     @property
     def pos(self):
@@ -251,7 +254,7 @@ if UPDATE:
     t6 = time.time()
     print(f'Written in {t6 - t5:.2f}s')
 else:
-    print('Reading...')
+    print('Reading Albuquerque...')
     t5 = time.time()
     with (open('./.nodes-cache-0.bin', 'rb') as f0,
           open('./.nodes-cache-1.bin', 'rb') as f1):
@@ -260,19 +263,20 @@ else:
     print(f'Read in {t6 - t5:.2f}s')
 
 
-def findnode(lat: int, lon: int):
+def findnode(fns, lat: int, lon: int):
     b = None
     bd = 1e10
-    for n in nodes.values():
+    for n in fns.values():
         cd = math.hypot(n.lat - lat, n.lon - lon)
         if b is None or cd < bd:
             bd = cd
             b = n
+    print(bd)
     return b
 
 
 def filternodes(line: Line):
-    maxdist = line.length() / 4  # TODO adjust?
+    maxdist = max(line.length() / 4, 0.001)  # TODO adjust?
     nds = {k: n for k, n in nodes.items()
            if line.dist((n.lat, n.lon)) < maxdist}
     for n in nds.values():
@@ -282,37 +286,41 @@ def filternodes(line: Line):
 
 @dataclasses.dataclass()
 class AStar:
-    def __init__(self, line: Line):
-        self.line = line
-        self.nodes = filternodes(line)
-        self.start = findnode(*self.line.a)
+    def __init__(self, a: XNode, b: XNode):
+        for n in nodes.values():
+            n.reset()
+        self.line = Line(a.pos, b.pos)
+        self.start = a
         self.start.gcost = 0  # by defn.
-        self.dest = findnode(*self.line.b)
+        self.dest = b
         self.dest_pos = (self.dest.lat, self.dest.lon)
         self.open = pqdict.pqdict.minpq({self.start: self.start.fcosti(self)})
         self.closed = set()
 
+
     def run(self) -> list[XNode]:  # TODO this is slow!
         while True:
             curr: XNode = self.open.pop()
+            self.closed.add(curr)
             if curr == self.dest:
                 break
             for nh in curr.conns:
-                if nh in self.closed:
+                if nh in self.closed or nh == curr:
                     continue
                 nh.set_prev_maybe(self, curr)
                 self.open[nh] = nh.fcosti(self)  # Update or add
-            self.closed.add(curr)
         path = []
+        pset = set()
         end = self.dest
-        while end.prev:
-            path.append(end.prev)
+        while end and end not in pset:
+            path.append(end)
+            pset.add(end)
             end = end.prev
         return path[::-1]
 
 
-def findpath(line: Line):
-    return AStar(line).run()
+def findpath(a: XNode, b: XNode):
+    return AStar(a, b).run()
 
 
 HTDOC = '''
@@ -339,26 +347,47 @@ HTDOC = '''
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
     }).addTo(map);
-    var latlngs = %(path)s;
-    var polyline = L.polyline(latlngs, {color: 'red'}).addTo(map);
-    var polyline = L.polyline([latlngs[0], latlngs.at(-1)], {color: 'blue', dashArray: '4,10'}).addTo(map);
+    var pts = %(paths)s;
+    for (const latlngs of pts) {
+      var polyline = L.polyline(latlngs, {color: 'red'}).addTo(map);
+      var polyline = L.polyline([latlngs[0], latlngs.at(-1)], {color: 'blue', dashArray: '4,10'}).addTo(map);
+    }
   </script>
 </body>
 </html>
 '''
 
 
+def find_paths(data):
+    paths: set[frozenset[tuple[float, float]]] = mgrid.MolToGrid(data)
+    print('Converting nodes...')
+    point_to_xnode = {}
+    for crd in [q for w in paths for q in w]:
+        if crd not in point_to_xnode:
+            point_to_xnode[crd] = findnode(nodes, *crd)
+    print('Finding path... 0%')
+    results = []
+    for i, (st, ed) in enumerate(paths):
+        results.append(findpath(point_to_xnode[ed], point_to_xnode[st]))
+        if i % 5:
+            print(f'Finding path... {(i + 1) / len(paths)*100:.0f}%')
+    return results
+
+
 def main():
     t3 = time.time()
-    result = findpath(Line((35.082456, -106.606479), (35.141165, -106.537356)))
-    print(*[(n.lat, n.lon) for n in result], sep=',', end='\n\n')
-    print(*[[n.lat, n.lon] for n in result], sep=',', end='\n\n')
-    with open('_temp_result.txt', 'w') as f:
-        i = 0
-        while i < len(result):
-            print(f'[{",".join([repr((n.lat, n.lon)) for n in result[i:i + 998]])}]', file=f)
-            i += 998
-    hd = HTDOC % {'path': json.dumps([(n.lat, n.lon) for n in result])}
+    with open('./sample_data_graphene.json') as f:
+        j = json.load(f)
+    results = find_paths(j)
+    # result = findpath(Line((35.082456, -106.606479), (35.141165, -106.537356)))
+    # print(*[(n.lat, n.lon) for r in results for n in r], sep=',', end='\n\n')
+    # print(*[[n.lat, n.lon] for r in results for n in r], sep=',', end='\n\n')
+    # with open('_temp_result.txt', 'w') as f:
+    #     i = 0
+    #     while i < len(result):
+    #         print(f'[{",".join([repr((n.lat, n.lon)) for n in result[i:i + 998]])}]', file=f)
+    #         i += 998
+    hd = HTDOC % {'paths': json.dumps([[(n.lat, n.lon) for n in r] for r in results])}
     with open('__result.html', 'w') as f:
         f.write(hd)
     t4 = time.time()
