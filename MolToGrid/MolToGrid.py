@@ -5,13 +5,6 @@ from scipy.optimize import linear_sum_assignment, minimize_scalar
 import ast
 import matplotlib.pyplot as plt
 
-# How much error we're willing to accept between the road intersections and the molecule
-acceptableError = 0.2
-
-## Read in the coordinates
-with open('sample_data.json','r') as f:
-    inputAtoms = json.load(f)
-
 def best_subset_assignment(A, B, optimize_scale=True):
     """
     Find the subset of B that best matches A using the Hungarian algorithm,
@@ -83,241 +76,250 @@ def best_subset_assignment(A, B, optimize_scale=True):
 
     return subset, mean_error
 
-## How far outside of central alberquerque we're willing to go
-tolerance = 0
+def MolToGrid(data):
 
-while True:
-    print(f"Tolerance: {tolerance}")
-    print("reading")
-    gridCoords = np.loadtxt(f"filtereds/albNPFiltered{tolerance}.txt",dtype=float)
-    print("done reading")
+    # How much error we're willing to accept between the road intersections and the molecule
+    acceptableError = 0.05
 
-    # with open('albuquerque.json','r') as f:
-    #     print("reading")
-    #     gridCoords = np.array(ast.literal_eval(f.read()))
-    #     print("done reading")
+    ## Read in the coordinates
+    with open(data,'r') as f:
+        inputAtoms = json.load(f)
 
-    inputCoords = []
-    for atom in inputAtoms:
-        inputCoords.append([atom['x'],atom['y']])
+    ## How far outside of central alberquerque we're willing to go
+    tolerance = 0
 
-    inputCoords = np.array(inputCoords)
+    while True:
+        print(f"Tolerance: {tolerance}")
+        print("reading")
+        gridCoords = np.loadtxt(f"filtereds/albNPFiltered{tolerance}.txt",dtype=float)
+        print("done reading")
 
-    # def best_subset_assignment(A, B):
-    #     print("started")
-    #     """
-    #     Find the subset of B that best matches A using the Hungarian algorithm.
-        
-    #     Parameters
-    #     ----------
-    #     A : (m, 2) array
-    #         Small set of coordinates.
-    #     B : (n, 2) array
-    #         Large set of coordinates (n >= m).
+        # with open('albuquerque.json','r') as f:
+        #     print("reading")
+        #     gridCoords = np.array(ast.literal_eval(f.read()))
+        #     print("done reading")
 
-    #     Returns
-    #     -------
-    #     subset : (m, 2) array
-    #         Subset of B that best matches A.
-    #     row_ind : array of ints
-    #         Indices of A in the assignment.
-    #     col_ind : array of ints
-    #         Indices of B chosen for each A[i].
-    #     mean_error : float
-    #         Mean distance between matched points.
-    #     """
+        inputCoords = []
+        for atom in inputAtoms:
+            inputCoords.append([atom['x'],atom['y']])
 
-    #     # Compute pairwise Euclidean distances
-    #     D = distance_matrix(A, B)
-    #     print("Made the matrix")
+        inputCoords = np.array(inputCoords)
 
-    #     # Run Hungarian algorithm
-    #     row_ind, col_ind = linear_sum_assignment(D)
-    #     print("Run algorithm")
+        # def best_subset_assignment(A, B):
+        #     print("started")
+        #     """
+        #     Find the subset of B that best matches A using the Hungarian algorithm.
+            
+        #     Parameters
+        #     ----------
+        #     A : (m, 2) array
+        #         Small set of coordinates.
+        #     B : (n, 2) array
+        #         Large set of coordinates (n >= m).
 
-    #     # Extract matched points
-    #     subset = B[col_ind]
-    #     print("Extracted subset")
-    #     mean_error = D[row_ind, col_ind].mean()
+        #     Returns
+        #     -------
+        #     subset : (m, 2) array
+        #         Subset of B that best matches A.
+        #     row_ind : array of ints
+        #         Indices of A in the assignment.
+        #     col_ind : array of ints
+        #         Indices of B chosen for each A[i].
+        #     mean_error : float
+        #         Mean distance between matched points.
+        #     """
 
-    #     return subset, row_ind, col_ind, mean_error
+        #     # Compute pairwise Euclidean distances
+        #     D = distance_matrix(A, B)
+        #     print("Made the matrix")
 
-    # def best_subset_assignment(A, B, center=True):
-    #     """
-    #     Find the subset of B that best matches A using the Hungarian algorithm,
-    #     optionally accounting for translation (centering).
+        #     # Run Hungarian algorithm
+        #     row_ind, col_ind = linear_sum_assignment(D)
+        #     print("Run algorithm")
 
-    #     Parameters
-    #     ----------
-    #     A : (m, 2) array
-    #         Small set of coordinates.
-    #     B : (n, 2) array
-    #         Large set of coordinates (n >= m).
-    #     center : bool, optional
-    #         If True, both sets are centered before matching (translation-invariant).
+        #     # Extract matched points
+        #     subset = B[col_ind]
+        #     print("Extracted subset")
+        #     mean_error = D[row_ind, col_ind].mean()
 
-    #     Returns
-    #     -------
-    #     subset : (m, 2) array
-    #         Subset of B (in original coordinates) that best matches A.
-    #     row_ind : array of ints
-    #         Indices of A in the assignment.
-    #     col_ind : array of ints
-    #         Indices of B chosen for each A[i].
-    #     mean_error : float
-    #         Mean distance between matched points after centering.
-    #     translation : (2,) array
-    #         Translation vector applied to B to align centroids with A.
-    #     """
+        #     return subset, row_ind, col_ind, mean_error
 
-    #     if center:
-    #         # Compute centroids
-    #         A_centroid = A.mean(axis=0)
-    #         B_centroid = B.mean(axis=0)
+        # def best_subset_assignment(A, B, center=True):
+        #     """
+        #     Find the subset of B that best matches A using the Hungarian algorithm,
+        #     optionally accounting for translation (centering).
 
-    #         # Center both sets
-    #         A_centered = A - A_centroid
-    #         B_centered = B - B_centroid
+        #     Parameters
+        #     ----------
+        #     A : (m, 2) array
+        #         Small set of coordinates.
+        #     B : (n, 2) array
+        #         Large set of coordinates (n >= m).
+        #     center : bool, optional
+        #         If True, both sets are centered before matching (translation-invariant).
 
-    #         # Compute pairwise distances
-    #         D = distance_matrix(A_centered, B_centered)
-    #         translation = B_centroid - A_centroid
-    #     else:
-    #         D = distance_matrix(A, B)
-    #         translation = np.zeros(2)
+        #     Returns
+        #     -------
+        #     subset : (m, 2) array
+        #         Subset of B (in original coordinates) that best matches A.
+        #     row_ind : array of ints
+        #         Indices of A in the assignment.
+        #     col_ind : array of ints
+        #         Indices of B chosen for each A[i].
+        #     mean_error : float
+        #         Mean distance between matched points after centering.
+        #     translation : (2,) array
+        #         Translation vector applied to B to align centroids with A.
+        #     """
 
-    #     # Run Hungarian algorithm
-    #     row_ind, col_ind = linear_sum_assignment(D)
+        #     if center:
+        #         # Compute centroids
+        #         A_centroid = A.mean(axis=0)
+        #         B_centroid = B.mean(axis=0)
 
-    #     # Extract matched points (in original coordinates)
-    #     subset = B[col_ind]
+        #         # Center both sets
+        #         A_centered = A - A_centroid
+        #         B_centered = B - B_centroid
 
-    #     # Compute mean error
-    #     mean_error = D[row_ind, col_ind].mean()
+        #         # Compute pairwise distances
+        #         D = distance_matrix(A_centered, B_centered)
+        #         translation = B_centroid - A_centroid
+        #     else:
+        #         D = distance_matrix(A, B)
+        #         translation = np.zeros(2)
 
-    #     return subset, row_ind, col_ind, mean_error, translation
-    # def best_subset_assignment(A, B, optimize_scale=True, optimize_rotation=True):
-    #     """
-    #     Find the subset of B that best matches A using the Hungarian algorithm,
-    #     accounting for translation, scaling, and (optionally) rotation.
+        #     # Run Hungarian algorithm
+        #     row_ind, col_ind = linear_sum_assignment(D)
 
-    #     Parameters
-    #     ----------
-    #     A : (m, 2) array
-    #         Smaller set of coordinates.
-    #     B : (n, 2) array
-    #         Larger set of coordinates (n >= m).
-    #     optimize_scale : bool
-    #         If True, find the best uniform scale factor.
-    #     optimize_rotation : bool
-    #         If True, find the best rotation matrix via SVD.
+        #     # Extract matched points (in original coordinates)
+        #     subset = B[col_ind]
 
-    #     Returns
-    #     -------
-    #     result : dict
-    #         {
-    #             "subset": (m, 2) array — subset of B aligned to A (ordered),
-    #             "mapping": dict — A_index → B_index,
-    #             "rotation": (2, 2) array — optimal rotation matrix,
-    #             "scale": float — optimal scale,
-    #             "translation": (2,) array — translation vector,
-    #             "mean_error": float — mean matching distance
-    #         }
-    #     """
+        #     # Compute mean error
+        #     mean_error = D[row_ind, col_ind].mean()
 
-    #     # Center both sets
-    #     A_centroid = A.mean(axis=0)
-    #     B_centroid = B.mean(axis=0)
-    #     A_centered = A - A_centroid
-    #     B_centered = B - B_centroid
+        #     return subset, row_ind, col_ind, mean_error, translation
+        # def best_subset_assignment(A, B, optimize_scale=True, optimize_rotation=True):
+        #     """
+        #     Find the subset of B that best matches A using the Hungarian algorithm,
+        #     accounting for translation, scaling, and (optionally) rotation.
 
-    #     # --- Optimize for scale ---
-    #     def mean_error_for_scale(s):
-    #         B_scaled = B_centered * s
-    #         R = np.eye(2)
-    #         if optimize_rotation:
-    #             # Estimate rotation via SVD between A and scaled B
-    #             M = A_centered.T @ B_scaled
-    #             U, _, Vt = np.linalg.svd(M)
-    #             R = U @ Vt
-    #         B_transformed = (B_scaled @ R.T)
-    #         D = distance_matrix(A_centered, B_transformed)
-    #         row_ind, col_ind = linear_sum_assignment(D)
-    #         return D[row_ind, col_ind].mean()
+        #     Parameters
+        #     ----------
+        #     A : (m, 2) array
+        #         Smaller set of coordinates.
+        #     B : (n, 2) array
+        #         Larger set of coordinates (n >= m).
+        #     optimize_scale : bool
+        #         If True, find the best uniform scale factor.
+        #     optimize_rotation : bool
+        #         If True, find the best rotation matrix via SVD.
 
-    #     if optimize_scale:
-    #         res = minimize_scalar(mean_error_for_scale, bounds=(0.1, 10), method='bounded')
-    #         best_scale = res.x
-    #     else:
-    #         best_scale = 1.0
+        #     Returns
+        #     -------
+        #     result : dict
+        #         {
+        #             "subset": (m, 2) array — subset of B aligned to A (ordered),
+        #             "mapping": dict — A_index → B_index,
+        #             "rotation": (2, 2) array — optimal rotation matrix,
+        #             "scale": float — optimal scale,
+        #             "translation": (2,) array — translation vector,
+        #             "mean_error": float — mean matching distance
+        #         }
+        #     """
 
-    #     # --- Compute final rotation ---
-    #     B_scaled = B_centered * best_scale
-    #     if optimize_rotation:
-    #         M = A_centered.T @ B_scaled
-    #         U, _, Vt = np.linalg.svd(M)
-    #         R = U @ Vt
-    #         # Correct for reflection (if determinant < 0)
-    #         if np.linalg.det(R) < 0:
-    #             U[:, -1] *= -1
-    #             R = U @ Vt
-    #     else:
-    #         R = np.eye(2)
+        #     # Center both sets
+        #     A_centroid = A.mean(axis=0)
+        #     B_centroid = B.mean(axis=0)
+        #     A_centered = A - A_centroid
+        #     B_centered = B - B_centroid
 
-    #     # Apply transform and run Hungarian algorithm
-    #     B_transformed = (B_scaled @ R.T)
-    #     D = distance_matrix(A_centered, B_transformed)
-    #     row_ind, col_ind = linear_sum_assignment(D)
-    #     mean_error = D[row_ind, col_ind].mean()
+        #     # --- Optimize for scale ---
+        #     def mean_error_for_scale(s):
+        #         B_scaled = B_centered * s
+        #         R = np.eye(2)
+        #         if optimize_rotation:
+        #             # Estimate rotation via SVD between A and scaled B
+        #             M = A_centered.T @ B_scaled
+        #             U, _, Vt = np.linalg.svd(M)
+        #             R = U @ Vt
+        #         B_transformed = (B_scaled @ R.T)
+        #         D = distance_matrix(A_centered, B_transformed)
+        #         row_ind, col_ind = linear_sum_assignment(D)
+        #         return D[row_ind, col_ind].mean()
 
-    #     # Compute translation in original coordinates
-    #     translation = A_centroid - (B_centroid @ R.T) * best_scale
+        #     if optimize_scale:
+        #         res = minimize_scalar(mean_error_for_scale, bounds=(0.1, 10), method='bounded')
+        #         best_scale = res.x
+        #     else:
+        #         best_scale = 1.0
 
-    #     # Subset in original coordinates, ordered to match A
-    #     subset = B[col_ind]
+        #     # --- Compute final rotation ---
+        #     B_scaled = B_centered * best_scale
+        #     if optimize_rotation:
+        #         M = A_centered.T @ B_scaled
+        #         U, _, Vt = np.linalg.svd(M)
+        #         R = U @ Vt
+        #         # Correct for reflection (if determinant < 0)
+        #         if np.linalg.det(R) < 0:
+        #             U[:, -1] *= -1
+        #             R = U @ Vt
+        #     else:
+        #         R = np.eye(2)
 
-    #     return subset
+        #     # Apply transform and run Hungarian algorithm
+        #     B_transformed = (B_scaled @ R.T)
+        #     D = distance_matrix(A_centered, B_transformed)
+        #     row_ind, col_ind = linear_sum_assignment(D)
+        #     mean_error = D[row_ind, col_ind].mean()
 
-    # The points in albuquerque that represent the molecule
-    albPoints, error = best_subset_assignment(inputCoords,gridCoords)
-    tolerance += 0.1
-    if error < acceptableError:
-        break
+        #     # Compute translation in original coordinates
+        #     translation = A_centroid - (B_centroid @ R.T) * best_scale
 
-with open("albCoordsOfMolecule.txt","w+") as f:
-    for i in albPoints:
-        f.write(str(float(i[0]))+" "+str(float(i[1]))+"\n")
+        #     # Subset in original coordinates, ordered to match A
+        #     subset = B[col_ind]
 
-## Adjacency list for the bonds
-bondData = [[{int(j):i['bonds'][j]['order']} for j in i['bonds']] for i in inputAtoms]
+        #     return subset
 
-with open("albBondData.txt", "w+") as f:
-    f.write(str(bondData))
+        # The points in albuquerque that represent the molecule
+        albPoints, error = best_subset_assignment(inputCoords,gridCoords)
+        tolerance += 0.1
+        if error < acceptableError:
+            break
 
-#Idea: Have some way to represent different elements differently?
-for i in range(len(albPoints)):
-   coords1 = albPoints[i]
-   atom1 =inputAtoms[i]
-   nodeNum=atom1['idx']
-   for j in atom1['bonds']:
-        j=int(j)
-        if j>nodeNum:
-            atom2 = inputAtoms[j]
-            coords2 = albPoints[j]
-            plt.plot([coords1[0],coords2[0]],[coords1[1],coords2[1]],'ro-')
-# for atom1 in inputAtoms:
+    with open("albCoordsOfMolecule.txt","w+") as f:
+        for i in albPoints:
+            f.write(str(float(i[0]))+" "+str(float(i[1]))+"\n")
+
+    ## Adjacency list for the bonds
+    bondData = [[{int(j):i['bonds'][j]['order']} for j in i['bonds']] for i in inputAtoms]
+
+    with open("albBondData.txt", "w+") as f:
+        f.write(str(bondData))
+
+# #Idea: Have some way to represent different elements differently?
+# for i in range(len(albPoints)):
+#    coords1 = albPoints[i]
+#    atom1 =inputAtoms[i]
 #    nodeNum=atom1['idx']
-#    atom1Coords = [atom1['x'],atom1['y']]
-#    for i in atom1['bonds']:
-#         i=int(i)
-#         if i>nodeNum:
-#             atom2 = inputAtoms[i]
-#             atom2Coords = [atom2['x'],atom2['y']]
-#             plt.plot([atom1Coords[0],atom2Coords[0]],[atom1Coords[1],atom2Coords[1]],'ro-')
+#    for j in atom1['bonds']:
+#         j=int(j)
+#         if j>nodeNum:
+#             atom2 = inputAtoms[j]
+#             coords2 = albPoints[j]
+#             plt.plot([coords1[0],coords2[0]],[coords1[1],coords2[1]],'ro-')
+# # for atom1 in inputAtoms:
+# #    nodeNum=atom1['idx']
+# #    atom1Coords = [atom1['x'],atom1['y']]
+# #    for i in atom1['bonds']:
+# #         i=int(i)
+# #         if i>nodeNum:
+# #             atom2 = inputAtoms[i]
+# #             atom2Coords = [atom2['x'],atom2['y']]
+# #             plt.plot([atom1Coords[0],atom2Coords[0]],[atom1Coords[1],atom2Coords[1]],'ro-')
 
-plt.gca().set_aspect('equal')
+# plt.gca().set_aspect('equal')
 
-plt.show()
+# plt.show()
 
 # Need to put all coordinates in reference frame with sam's club
 # Need to handle scaling somehow. 
