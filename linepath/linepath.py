@@ -365,9 +365,9 @@ HTDOC = '''
       var polyline = L.polyline(latlngs, {color: 'red'}).addTo(map);
       //var polyline = L.polyline([latlngs[0], latlngs.at(-1)], {color: 'blue', dashArray: '4,10'}).addTo(map);
     }
-    //for (const [latlng, text] of els) {
-    //  L.tooltip({className:'qwerty'}).setLatLng(latlng).setContent(text).addTo(map);
-    //}
+    for (const [latlng, color] of els) {
+      L.circleMarker(latlng, {radius: 10, color}).addTo(map);
+    }
   </script>
 </body>
 </html>
@@ -399,6 +399,7 @@ def find_paths(place, data):
             xn_to_elem[xnode] = ll2elem[crd]
     print('Finding path... 0%')
     results = []
+    # TODO: replace str(...) with color
     els = [(xn.pos, str(xn_to_elem[xn])) for xn in xn_to_elem.keys()]
     for i, (st, ed) in enumerate(paths):
         path = findpath(nodes, point_to_xnode[st], point_to_xnode[ed])
@@ -434,7 +435,7 @@ def main():
     #         print(f'[{",".join([repr((n.lat, n.lon)) for n in result[i:i + 998]])}]', file=f)
     #         i += 998
     hd = HTDOC % {'paths': json.dumps([[(n.lat, n.lon) for n in r] for r in results]),
-                  'els': json.dumps('els')}
+                  'els': json.dumps(els)}
     with open('__result.html', 'w') as f:
         f.write(hd)
     t4 = time.time()
