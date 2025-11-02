@@ -364,8 +364,8 @@ HTDOC = '''
       var polyline = L.polyline(latlngs, {color: 'black', weight: 4}).addTo(map);
       //var polyline = L.polyline([latlngs[0], latlngs.at(-1)], {color: 'blue', dashArray: '4,10'}).addTo(map);
     }
-    for (const [latlng, color] of els) {
-      L.circleMarker(latlng, {radius: 16, color: color, fillColor: color, fillOpacity: 0.5, weight: 4}).addTo(map);
+    for (const [latlng, color, w] of els) {
+      L.circleMarker(latlng, {radius: w == 1 ? 11 : 16, color: color, fillColor: color, fillOpacity: 0.5, weight: 4}).addTo(map);
     }
   </script>
 </body>
@@ -398,7 +398,7 @@ def find_paths(place, data):
     print('Finding path... 0%')
     results = []
     # TODO: replace str(...) with color
-    els = [(xn.pos, f"rgb({element_colour_map[str(xn_to_elem[xn])][0]}, {element_colour_map[str(xn_to_elem[xn])][1]}, {element_colour_map[str(xn_to_elem[xn])][2]})") for xn in xn_to_elem.keys()]
+    els = [(xn.pos, f"rgb({element_colour_map[str(xn_to_elem[xn])][0]}, {element_colour_map[str(xn_to_elem[xn])][1]}, {element_colour_map[str(xn_to_elem[xn])][2]})", xn_to_elem[xn]) for xn in xn_to_elem.keys()]
     # print("")
     # print(els)
     # input("")
