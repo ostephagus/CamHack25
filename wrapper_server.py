@@ -9,6 +9,7 @@ PLACE = 'albuquerque'  # or 'cambridge'
 def main():
     while True:
         name = input()
+        print("Received", name, flush=True)
         if name == '!exit':
             return
         molJson = json.loads(api_calls.compound_coords.getJson(name))
