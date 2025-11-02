@@ -6,7 +6,7 @@ import ast
 import matplotlib.pyplot as plt
 
 # How much error we're willing to accept between the road intersections and the molecule
-acceptableError = 0.1
+acceptableError = 0.2
 
 ## Read in the coordinates
 with open('sample_data.json','r') as f:
@@ -54,6 +54,7 @@ def best_subset_assignment(A, B, optimize_scale=True):
     def mean_error_for_scale(s):
         """Compute mean assignment error for a given scale s."""
         B_scaled = B_centered * s
+        ## Simply the matrix of distances between all the points in A and all the points in B
         D = distance_matrix(A_centered, B_scaled)
         row_ind, col_ind = linear_sum_assignment(D)
         return D[row_ind, col_ind].mean()
@@ -61,7 +62,7 @@ def best_subset_assignment(A, B, optimize_scale=True):
     print("Optimising for scale")
     if optimize_scale:
         # Optimize the scale factor to minimize mean matching error
-        res = minimize_scalar(mean_error_for_scale, bounds=(0.1, 10), method='bounded')
+        res = minimize_scalar(mean_error_for_scale, bounds=(0.0001, 10000), method='bounded')
         best_scale = res.x
     else:
         best_scale = 1.0
@@ -78,7 +79,7 @@ def best_subset_assignment(A, B, optimize_scale=True):
 
     # Subset in original coordinate space
     subset = B[col_ind]
-    print(mean_error)
+    print(f"Error: {mean_error}")
 
     return subset, mean_error
 
@@ -86,7 +87,7 @@ def best_subset_assignment(A, B, optimize_scale=True):
 tolerance = 0
 
 while True:
-    print(tolerance)
+    print(f"Tolerance: {tolerance}")
     print("reading")
     gridCoords = np.loadtxt(f"filtereds/albNPFiltered{tolerance}.txt",dtype=float)
     print("done reading")
@@ -279,7 +280,7 @@ while True:
 
     # The points in albuquerque that represent the molecule
     albPoints, error = best_subset_assignment(inputCoords,gridCoords)
-    tolerance += 0.2625
+    tolerance += 0.1
     if error < acceptableError:
         break
 
@@ -313,6 +314,8 @@ for i in range(len(albPoints)):
 #             atom2 = inputAtoms[i]
 #             atom2Coords = [atom2['x'],atom2['y']]
 #             plt.plot([atom1Coords[0],atom2Coords[0]],[atom1Coords[1],atom2Coords[1]],'ro-')
+
+plt.gca().set_aspect('equal')
 
 plt.show()
 
