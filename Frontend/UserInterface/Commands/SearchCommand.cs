@@ -8,7 +8,6 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using Newtonsoft.Json;
-using ProjectInfo;
 using UserInterface.ViewModels;
 using UserInterface.Views;
 
@@ -31,7 +30,7 @@ namespace UserInterface.Commands
         }
         private static List<string> GetSearchResults(string searchText)
         {
-            RunPyScriptCommand scriptRunner = new RunPyScriptCommand($"{BuildInfo.SolutionDir}/../api_calls/spell_suggest.py");
+            RunPyScriptCommand scriptRunner = new RunPyScriptCommand($"{Paths.BaseDirectory}/../api_calls/spell_suggest.py");
             if (!scriptRunner.CanExecute(null))
             {
                 MessageBox.Show("Python file not attached.");

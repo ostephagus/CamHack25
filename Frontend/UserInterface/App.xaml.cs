@@ -24,6 +24,7 @@ namespace UserInterface
         private void Application_Startup(object sender, StartupEventArgs e)
         {
             mainWindow = new MainWindow();
+            //MessageBox.Show($"Running in {Paths.BaseDirectory}.");
             pythonManager = new($"{Paths.BaseDirectory}/../wrapper_server.py");
             pythonManager.StartProcess();
 
