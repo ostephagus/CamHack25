@@ -356,26 +356,29 @@ HTDOC = '''
   <div id="map"></div>
   <script>
     var map = L.map('map').setView([35.126086394372976, -106.5941619873047], 12);
-    L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
     }).addTo(map);
     var pts = %(paths)s;
     var els = %(els)s;
-    var bonds = %(ords)s;
+    var bonds = %(bonds)s;
 
     bonds.forEach((bond,i) => {
-        var lineWeight = (bond)* 2;
+        var a1 = pts[i][bond.a1] !== undefined ? pts[i][bond.a1] : [0,0];
+        var a2 = pts[i][bond.a2] !== undefined ? pts[i][bond.a2] : [0,0];
+        var lineWeight = (bond.order)* 2;
     
-      L.polyline(pts[i],  {color: 'black', weight: 4*lineWeight}).addTo(map);
+      L.polyline(pts[i],  {color: 'red', weight: lineWeight}).addTo(map);
       //var polyline = L.polyline([latlngs[0], latlngs.at(-1)], {color: 'blue', dashArray: '4,10'}).addTo(map);
     })
-    for (const [latlng, color] of els){
-    L.circleMarker(latlng, {radius: 16, color: color, fillColor: color, fillOpacity: 0.5, weight: 4}).addTo(map)
-    };
+    els.forEach(p => {
+      L.circleMarker([p[1], p[0]], {radius: 10, color: 'red', fillColor: 'red', fillOpacity: 1}).addTo(map);
+    });
   </script>
   </body>
   </html>
 '''
+
 
 
 NODE_MEM = {}
@@ -386,8 +389,6 @@ def place_to_xml(place):
 
 
 def find_paths(place, data):
-    with open("linepath/cpk.json") as f:
-        element_colour_map = json.load(f)
     paths: set[frozenset[tuple[float, float]]]
     xml = place_to_xml(place)
     if place in NODE_MEM:
@@ -406,27 +407,19 @@ def find_paths(place, data):
     print('Finding path... 0%')
     results = []
     # TODO: replace str(...) with color
-    els = [(xn.pos, f"rgb({element_colour_map[str(xn_to_elem[xn])][0]}, {element_colour_map[str(xn_to_elem[xn])][1]}, {element_colour_map[str(xn_to_elem[xn])][2]})") for xn in xn_to_elem.keys()]
-    # print("")
-    # print(els)
-    # input("")
-    ords = []
+    els = [(xn.pos, str(xn_to_elem[xn])) for xn in xn_to_elem.keys()]
     for i, (st, ed) in enumerate(paths):
-        stn = point_to_xnode[st]
-        edn = point_to_xnode[ed]
-        path = findpath(nodes, stn, edn)
+        path = findpath(nodes, point_to_xnode[st], point_to_xnode[ed])
         results.append(path)
-        print(data)
-        ords.append(data[stn.ref]["bonds"][str(edn.ref)]["order"])
         if i % 10:
             print(f'Finding path... {(i + 1) / len(paths)*100:.0f}%')
-    
-    return results, els, ords
+    return results, els
 
 
 def run(j, place='albuquerque'):
+    
     t3 = time.time()
-    results, els,ords = find_paths(place, j)
+    results, els = find_paths(place, j)
 
     bonds = []
 
@@ -436,8 +429,6 @@ def run(j, place='albuquerque'):
             bonded_idx = int(bonded_idx)
         # Store bond as a sorted tuple to prevent duplicates like (0,1) and (1,0)
             bond = tuple(sorted((idx, bonded_idx)))
-            if idx > bonded_idx:
-                continue
             # Only add if it's not already in bonds
         
             bonds.append({'a1': bond[0], 'a2': bond[1], 'order': bond_info['order']})
@@ -445,14 +436,16 @@ def run(j, place='albuquerque'):
 
 # Convert set to list if you want
     pts_json = json.dumps([[[n.lat, n.lon] for n in r] for r in results])
-    els_json = json.dumps(els)
+    els_json = json.dumps([[atom[0][0], atom[0][1], atom[1]] for atom in els])
     bonds_json = json.dumps(bonds)
     order_list = list()
     for i in bonds:
         order_list.append(i['order'])
+   
+
 
     hd = HTDOC % {'paths': pts_json,
-                  'els': els_json, 'bonds': bonds_json,'ords':ords}
+                  'els': els_json, 'bonds': bonds_json}
     with open('__result.html', 'w') as f:
         f.write(hd)
     t4 = time.time()
@@ -473,8 +466,15 @@ def main():
     #     while i < len(result):
     #         print(f'[{",".join([repr((n.lat, n.lon)) for n in result[i:i + 998]])}]', file=f)
     #         i += 998
+        # Open and load JSON file
+    with open('data.json', 'r') as file:
+        bond_type = json.loads(file)
+        orders = [bond_info["order"] for bond_info in bond_type['bonds'].values()]
+
+    print(orders)
+
     hd = HTDOC % {'paths': json.dumps([[(n.lat, n.lon) for n in r] for r in results]),
-                  'els': json.dumps(els)}
+                  'els': json.dumps(els), 'bonds': json.dumps(bonds)}
     with open('__result.html', 'w') as f:
         f.write(hd)
     t4 = time.time()
