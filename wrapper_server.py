@@ -7,6 +7,7 @@ PLACE = 'albuquerque'  # or 'cambridge'
 
 
 def main():
+    linepath.linepath.load_nodes(f'{PLACE}.xml')  # discard result, just cache
     while True:
         name = input()
         print("Received", name, flush=True)
