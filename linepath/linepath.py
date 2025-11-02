@@ -355,7 +355,7 @@ HTDOC = '''
     var pts = %(paths)s;
     for (const latlngs of pts) {
       var polyline = L.polyline(latlngs, {color: 'red'}).addTo(map);
-      var polyline = L.polyline([latlngs[0], latlngs.at(-1)], {color: 'blue', dashArray: '4,10'}).addTo(map);
+      //var polyline = L.polyline([latlngs[0], latlngs.at(-1)], {color: 'blue', dashArray: '4,10'}).addTo(map);
     }
   </script>
 </body>

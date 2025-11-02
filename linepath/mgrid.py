@@ -59,7 +59,7 @@ def best_subset_assignment(A, B, optimize_scale=True):
     print("Optimising for scale")
     if optimize_scale:
         # Optimize the scale factor to minimize mean matching error
-        res = minimize_scalar(mean_error_for_scale, bounds=(0.001, 5000), method='bounded')
+        res = minimize_scalar(mean_error_for_scale, bounds=(0.001, 700), method='bounded')
         best_scale = res.x
     else:
         best_scale = 1.0
