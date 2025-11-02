@@ -1,9 +1,11 @@
 import json
+from pathlib import Path
+
 import numpy as np
 from scipy.spatial import distance_matrix
 from scipy.optimize import linear_sum_assignment, minimize_scalar
-import ast
-import matplotlib.pyplot as plt
+
+R = Path(__file__).parent.parent
 
 
 def best_subset_assignment(A, B, optimize_scale=True):
@@ -91,7 +93,7 @@ def MolToGrid(atom_json):
     while True:
         print(f"Tolerance: {tolerance}")
         print("reading")
-        gridCoords = np.loadtxt(f"../MolToGrid/filtereds/albNPFiltered{tolerance}.txt", dtype=float)
+        gridCoords = np.loadtxt(R / f"MolToGrid/filtereds/albNPFiltered{tolerance}.txt", dtype=float)
         print("done reading")
 
         inputCoords = []

@@ -5,6 +5,7 @@ import itertools
 import json
 import math
 import struct
+import sys
 import time
 import typing
 import webbrowser
@@ -14,7 +15,11 @@ from pathlib import Path
 import pqdict
 from typing import TYPE_CHECKING
 
-import mgrid
+R = Path(__file__).parent.parent
+sys.path.append(str(R))
+
+import linepath.mgrid as mgrid
+
 
 if TYPE_CHECKING:
     from xml.etree.ElementTree import parse, Element
@@ -65,7 +70,7 @@ def line_point_dist(lpos: tuple[float, float], ldir: tuple[float, float],
     a = dy
     b = -dx
     c = - dy*px + dx*py
-    return abs((a*x+b*y+c)/math.hypot(a, b))
+    return abs((a*x+b*y+c)/(math.hypot(a, b) or 0.0001))
 
 
 @dataclasses.dataclass(slots=True)
@@ -225,7 +230,7 @@ UPDATE = False
 
 if UPDATE:
     t0 = time.perf_counter()
-    with open('../albuquerque.xml', 'rb') as f:
+    with open(R / 'albuquerque.xml', 'rb') as f:
         t = parse(f).getroot()
     nodes: dict[int, XNode] = {}
     for i, a in enumerate(t):
@@ -248,16 +253,16 @@ if UPDATE:
 
     print('Writing...')
     t5 = time.time()
-    with (open('./.nodes-cache-0.bin', 'wb') as f0,
-          open('./.nodes-cache-1.bin', 'wb') as f1):
+    with (open(R / 'linepath/.nodes-cache-0.bin', 'wb') as f0,
+          open(R / 'linepath/.nodes-cache-1.bin', 'wb') as f1):
         Writer(f0, f1).write([*nodes.values()])
     t6 = time.time()
     print(f'Written in {t6 - t5:.2f}s')
 else:
     print('Reading Albuquerque...')
     t5 = time.time()
-    with (open('./.nodes-cache-0.bin', 'rb') as f0,
-          open('./.nodes-cache-1.bin', 'rb') as f1):
+    with (open(R / 'linepath/.nodes-cache-0.bin', 'rb') as f0,
+          open(R / 'linepath/.nodes-cache-1.bin', 'rb') as f1):
         nodes = Reader(f0, f1).read()
     t6 = time.time()
     print(f'Read in {t6 - t5:.2f}s')
@@ -372,6 +377,17 @@ def find_paths(data):
         if i % 5:
             print(f'Finding path... {(i + 1) / len(paths)*100:.0f}%')
     return results
+
+
+def run(j):
+    t3 = time.time()
+    results = find_paths(j)
+    hd = HTDOC % {'paths': json.dumps([[(n.lat, n.lon) for n in r] for r in results])}
+    with open('__result.html', 'w') as f:
+        f.write(hd)
+    t4 = time.time()
+    print(f'Found molecule path in {t4 - t3:.2f}s')
+    webbrowser.open(Path('__result.html').absolute().as_uri())
 
 
 def main():
