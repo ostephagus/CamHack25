@@ -32,12 +32,9 @@ namespace UserInterface.ViewModels
             get => errorMessage;
             set
             {
-                if (IsError ^ value != "")
-                {
-                    OnPropertyChanged(this, nameof(IsError));
-                }
                 errorMessage = value;
                 OnPropertyChanged(this, nameof(ErrorMessage));
+                OnPropertyChanged(this, nameof(IsError));
                 
             }
         }
@@ -45,12 +42,19 @@ namespace UserInterface.ViewModels
         {
             if (text.Length < 3)
             {
-                errorMessage = "Please enter at least 3 characters.";
+                ErrorMessage = "Please enter at least 3 characters.";
             }
             else
             {
-                errorMessage = "";
-                searchCommand.Execute(text);
+                ErrorMessage = "";
+                try
+                {
+                    searchCommand.Execute(text);
+                }
+                catch (ArgumentException e)
+                {
+                    ErrorMessage = "No results. Try again with a different molecule.";
+                }
             }
 
         }
@@ -63,6 +67,7 @@ namespace UserInterface.ViewModels
         public SearchScreenVM(SearchCommand searchCommand)
         {
             this.searchCommand = searchCommand;
+            errorMessage = "";
         }
     }
 }

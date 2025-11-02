@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -33,8 +35,24 @@ namespace UserInterface.Commands
         public void Execute(object? parameter)
         {
             string selectedMolecule = parentViewModel.SelectedMolecule;
-            // Run python script here.
-            MessageBox.Show("Python script not yet attached.");
+            try
+            {
+                ProcessStartInfo startInfo = new ProcessStartInfo
+                {
+                    FileName = "cmd.exe",
+                    Arguments = $"/c python {ProjectInfo.BuildInfo.SolutionDir}/../wrapper.py {selectedMolecule}",
+                    UseShellExecute = true,
+                    CreateNoWindow = false,
+                    WorkingDirectory = $"{ProjectInfo.BuildInfo.SolutionDir}/.."
+                };
+                Process.Start(startInfo);
+                MessageBox.Show("Process started.");
+
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show($"Execution of python script failed: {e.Message}");
+            }
         }
     }
 }
