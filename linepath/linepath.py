@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import dataclasses
-import functools
 import itertools
 import json
 import math
@@ -80,7 +79,7 @@ class XNode:
     ref: int
     lat: float
     lon: float
-    conns: set[int] = field(repr=False)
+    conns: set[XNode] = field(repr=False)
     gcost: float = float('inf')  # scary!
     prev: XNode | None = None
 
@@ -138,18 +137,21 @@ class XNode:
     def distance(self, other: XNode):
         return distance(self.pos, other.pos)
 
+    def topickle(self):
+        return self.ref, self.lat, self.lon, {n.ref for n in self.conns}
+
 
 def parse_way(nodes, w: Element):
-    cnr: set[int] = set()
+    cn: set[XNode] = set()
     ishwy = False
     for ch in w:
         if ch.tag == 'nd':
-            cnr.add(int(ch.get('ref')))
+            cn.add(nodes[int(ch.get('ref'))])
         if ch.tag == 'tag' and ch.get('k') == 'highway' and ch.get('v') != 'footway':
             ishwy = True
     if ishwy:
-        for nr in cnr:
-            nodes[nr].conns |= cnr - {nr}
+        for n in cn:
+            n.conns |= cn - {n}
 
 
 class Writer:
@@ -171,8 +173,8 @@ class Writer:
                 self.fi = min(self.fi + 1, len(self.fs) - 1)
                 self.f = self.fs[self.fi]
 
-    def nalloc(self, n: int):
-        return self.nalloc_tb[n]
+    def nalloc(self, n: XNode):
+        return self.nalloc_tb[n.ref]
 
     def write_node(self, n: XNode):
         n_conn = len(n.conns)
@@ -211,17 +213,22 @@ class Reader:
         return i, lat, lon, conns
 
     def read(self):
+        connlist = []
         nodes: list[XNode] = []
         try:
             for i in itertools.count():
                 i, lat, lon, conns = self.read_node(i)
-                nodes.append(XNode(i, lat, lon, set(conns)))
+                nodes.append(XNode(i, lat, lon, set()))
+                connlist.append(conns)
         except EOFError:
             pass
+        for n in nodes:
+            n.conns |= {nodes[ref] for ref in connlist[n.ref]}
         return {n.ref: n for n in nodes}
 
 
-@functools.cache
+
+
 def load_nodes(xml: str):
     extra = '' if xml == 'albuquerque.xml' else f'-{xml.removesuffix(".xml")}'
     if UPDATE:
@@ -255,7 +262,7 @@ def load_nodes(xml: str):
         t6 = time.time()
         print(f'Written in {t6 - t5:.2f}s')
     else:
-        print('Reading Albuquerque...', flush=True)
+        print('Reading Albuquerque...')
         t5 = time.time()
         with (open(R / f'linepath/.nodes-cache{extra}-0.bin', 'rb') as f0,
               open(R / f'linepath/.nodes-cache{extra}-1.bin', 'rb') as f1):
@@ -286,19 +293,14 @@ def filternodes(nodes, line: Line):
     return nds
 
 
-# MOD_NODES = set()
-
-
 @dataclasses.dataclass()
 class AStar:
     def __init__(self, nodes, a: XNode, b: XNode):
-        self.nodes = nodes
         for n in nodes.values():
             n.reset()
         self.line = Line(a.pos, b.pos)
         self.start = a
         self.start.gcost = 0  # by defn.
-        # MOD_NODES.add()
         self.dest = b
         self.dest_pos = (self.dest.lat, self.dest.lon)
         self.open = pqdict.pqdict.minpq({self.start: self.start.fcosti(self)})
@@ -311,8 +313,7 @@ class AStar:
                 self.closed.add(curr)
                 if curr == self.dest:
                     break
-                for nhr in curr.conns:
-                    nh = self.nodes[nhr]
+                for nh in curr.conns:
                     if nh in self.closed or nh == curr:
                         continue
                     nh.set_prev_maybe(self, curr)
@@ -360,12 +361,18 @@ HTDOC = '''
     }).addTo(map);
     var pts = %(paths)s;
     var els = %(els)s;
-    for (const latlngs of pts) {
-      var polyline = L.polyline(latlngs, {color: 'black', weight: 4}).addTo(map);
+    var bonds = %(bonds)s;
+
+    bonds.forEach((bond,i) => {
+        var a1 = pts[i][bond.a1] !== undefined ? pts[i][bond.a1] : [0,0];
+        var a2 = pts[i][bond.a2] !== undefined ? pts[i][bond.a2] : [0,0];
+        var lineWeight = bond.order * 2;
+    
+      L.polyline(pts[i],  {color: 'red', weight: lineWeight}).addTo(map);
       //var polyline = L.polyline([latlngs[0], latlngs.at(-1)], {color: 'blue', dashArray: '4,10'}).addTo(map);
-    }
-    for (const [latlng, color, w] of els) {
-      L.circleMarker(latlng, {radius: w == 1 ? 11 : 16, color: color, fillColor: color, fillOpacity: 0.5, weight: 4}).addTo(map);
+    })
+    for (const [latlng, color] of els) {
+      L.circleMarker(latlng, {radius: 16, color: color, fillColor: color, fillOpacity: 0.5, weight: 4}).addTo(map);
     }
   </script>
 </body>
@@ -385,7 +392,10 @@ def find_paths(place, data):
         element_colour_map = json.load(f)
     paths: set[frozenset[tuple[float, float]]]
     xml = place_to_xml(place)
-    nodes = load_nodes(xml)
+    if place in NODE_MEM:
+        nodes = NODE_MEM[xml]
+    else:
+        nodes = NODE_MEM[xml] = load_nodes(xml)
     paths, ll2elem = mgrid.MolToGrid(data, is_cam=xml=='cambridge.xml')
     print('Converting nodes...')
     point_to_xnode = {}
@@ -398,7 +408,7 @@ def find_paths(place, data):
     print('Finding path... 0%')
     results = []
     # TODO: replace str(...) with color
-    els = [(xn.pos, f"rgb({element_colour_map[str(xn_to_elem[xn])][0]}, {element_colour_map[str(xn_to_elem[xn])][1]}, {element_colour_map[str(xn_to_elem[xn])][2]})", xn_to_elem[xn]) for xn in xn_to_elem.keys()]
+    els = [(xn.pos, f"rgb({element_colour_map[str(xn_to_elem[xn])][0]}, {element_colour_map[str(xn_to_elem[xn])][1]}, {element_colour_map[str(xn_to_elem[xn])][2]})") for xn in xn_to_elem.keys()]
     # print("")
     # print(els)
     # input("")
@@ -411,12 +421,61 @@ def find_paths(place, data):
 
 
 def run(j, place='albuquerque'):
+    
     t3 = time.time()
     results, els = find_paths(place, j)
-    hd = HTDOC % {'paths': json.dumps([[(n.lat, n.lon) for n in r] for r in results]),
-                  'els': json.dumps(els)}
+
+    bonds = []
+
+    for atom in j:
+        idx = atom['idx']
+        for bonded_idx, bond_info in atom['bonds'].items():
+            bonded_idx = int(bonded_idx)
+        # Store bond as a sorted tuple to prevent duplicates like (0,1) and (1,0)
+            bond = tuple(sorted((idx, bonded_idx)))
+            # Only add if it's not already in bonds
+        if not any((b['a1'], b['a2']) == bond or (b['a2'], b['a1']) == bond for b in bonds):
+            bonds.append({'a1': bond[0], 'a2': bond[1], 'order': bond_info['order']})
+            
+
+# Convert set to list if you want
+    pts_json = json.dumps([[[n.lat, n.lon] for n in r] for r in results])
+    els_json = json.dumps([[[atom[0][0], atom[0][1], atom[1]],atom[2]] for atom in els])
+    bonds_json = json.dumps(bonds)
+    order_list = list()
+    for i in bonds:
+        order_list.append(i['order'])
+
+    hd = HTDOC % {'paths': pts_json,
+                  'els': els_json, 'bonds': bonds_json}
     with open('__result.html', 'w') as f:
         f.write(hd)
     t4 = time.time()
     print(f'Found molecule path in {t4 - t3:.2f}s')
     webbrowser.open(Path('__result.html').absolute().as_uri())
+
+
+def main():
+    t3 = time.time()
+    with open('./sample_data_graphene.json') as f:
+        j = json.load(f)
+    results, els = find_paths('albuquerque', j)
+    # result = findpath(Line((35.082456, -106.606479), (35.141165, -106.537356)))
+    # print(*[(n.lat, n.lon) for r in results for n in r], sep=',', end='\n\n')
+    # print(*[[n.lat, n.lon] for r in results for n in r], sep=',', end='\n\n')
+    # with open('_temp_result.txt', 'w') as f:
+    #     i = 0
+    #     while i < len(result):
+    #         print(f'[{",".join([repr((n.lat, n.lon)) for n in result[i:i + 998]])}]', file=f)
+    #         i += 998
+    hd = HTDOC % {'paths': json.dumps([[(n.lat, n.lon) for n in r] for r in results]),
+                  'els': json.dumps(els)}
+    with open('__result.html', 'w') as f:
+        f.write(hd)
+    t4 = time.time()
+    print(f'Found path in {t4 - t3:.2f}s')
+    webbrowser.open(Path('__result.html').absolute().as_uri())
+
+
+if __name__ == '__main__':
+    main()
