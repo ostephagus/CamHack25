@@ -714,3 +714,7 @@ pyrightconfig.json
 ## Molecule data is regenerated every time
 MolToGrid/albBondData.txt
 MolToGrid/albCoordsOfMolecule.txt
+sample_data*
+*/sample_data*
+*/*/sample_data*
+*result.html*
