@@ -381,7 +381,7 @@ def place_to_xml(place):
 def find_paths(place, data):
     paths: set[frozenset[tuple[float, float]]]
     xml = place_to_xml(place)
-    if place in NODE_MEM:
+    if xml in NODE_MEM:
         nodes = NODE_MEM[xml]
     else:
         nodes = NODE_MEM[xml] = load_nodes(xml)
