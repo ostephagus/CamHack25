@@ -366,7 +366,7 @@ HTDOC = '''
       //var polyline = L.polyline([latlngs[0], latlngs.at(-1)], {color: 'blue', dashArray: '4,10'}).addTo(map);
     }
     for (const [latlng, color] of els) {
-      L.circleMarker(latlng, {radius: 10, color}).addTo(map);
+      L.circleMarker(latlng, {radius: 10, color: 'red', fillColor: 'red', fillOpacity: 1}).addTo(map);
     }
   </script>
 </body>

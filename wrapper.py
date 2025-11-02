@@ -3,7 +3,7 @@ import json
 import api_calls.compound_coords
 import linepath.linepath
 
-PLACE = 'cambridge'  # or 'cambridge'
+PLACE = 'albuquerque'  # or 'cambridge'
 
 
 def main():
