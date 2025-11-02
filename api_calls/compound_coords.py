@@ -74,7 +74,10 @@ def get_data(name: str):
     return get_coords(get_full_data(name))
 
 def getJson(name):
-    return json.dumps(get_data(name))
+    data = json.dumps(get_data(name))
+    with open(f"MolToGrid/sample_data_{name}.json".replace(' ','_'),"w+") as f:
+        f.write(data)
+    return data
 
 def main():
     import argparse
