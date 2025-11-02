@@ -227,8 +227,6 @@ class Reader:
         return {n.ref: n for n in nodes}
 
 
-
-
 def load_nodes(xml: str):
     extra = '' if xml == 'albuquerque.xml' else f'-{xml.removesuffix(".xml")}'
     if UPDATE:
@@ -419,29 +417,3 @@ def run(j, place='albuquerque'):
     t4 = time.time()
     print(f'Found molecule path in {t4 - t3:.2f}s')
     webbrowser.open(Path('__result.html').absolute().as_uri())
-
-
-def main():
-    t3 = time.time()
-    with open('./sample_data_graphene.json') as f:
-        j = json.load(f)
-    results, els = find_paths('albuquerque', j)
-    # result = findpath(Line((35.082456, -106.606479), (35.141165, -106.537356)))
-    # print(*[(n.lat, n.lon) for r in results for n in r], sep=',', end='\n\n')
-    # print(*[[n.lat, n.lon] for r in results for n in r], sep=',', end='\n\n')
-    # with open('_temp_result.txt', 'w') as f:
-    #     i = 0
-    #     while i < len(result):
-    #         print(f'[{",".join([repr((n.lat, n.lon)) for n in result[i:i + 998]])}]', file=f)
-    #         i += 998
-    hd = HTDOC % {'paths': json.dumps([[(n.lat, n.lon) for n in r] for r in results]),
-                  'els': json.dumps(els)}
-    with open('__result.html', 'w') as f:
-        f.write(hd)
-    t4 = time.time()
-    print(f'Found path in {t4 - t3:.2f}s')
-    webbrowser.open(Path('__result.html').absolute().as_uri())
-
-
-if __name__ == '__main__':
-    main()
