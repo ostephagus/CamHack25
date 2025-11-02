@@ -17,7 +17,7 @@ def main():
         molJson = json.loads(api_calls.compound_coords.getJson(ns.name))
         # MolToGrid.MolToGrid.MolToGrid(molJson)
         linepath.linepath.run(molJson, PLACE)  # Call MolToGrid on its own
-    p.dump_stats('p0.prof')
+    p.dump_stats('p2.prof')
 
 
 if __name__=="__main__":

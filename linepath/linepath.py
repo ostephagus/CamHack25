@@ -79,7 +79,7 @@ class XNode:
     ref: int
     lat: float
     lon: float
-    conns: set[XNode] = field(repr=False)
+    conns: set[int] = field(repr=False)
     gcost: float = float('inf')  # scary!
     prev: XNode | None = None
 
@@ -137,21 +137,18 @@ class XNode:
     def distance(self, other: XNode):
         return distance(self.pos, other.pos)
 
-    def topickle(self):
-        return self.ref, self.lat, self.lon, {n.ref for n in self.conns}
-
 
 def parse_way(nodes, w: Element):
-    cn: set[XNode] = set()
+    cnr: set[int] = set()
     ishwy = False
     for ch in w:
         if ch.tag == 'nd':
-            cn.add(nodes[int(ch.get('ref'))])
+            cnr.add(int(ch.get('ref')))
         if ch.tag == 'tag' and ch.get('k') == 'highway' and ch.get('v') != 'footway':
             ishwy = True
     if ishwy:
-        for n in cn:
-            n.conns |= cn - {n}
+        for nr in cnr:
+            nodes[nr].conns |= cnr - {nr}
 
 
 class Writer:
@@ -173,8 +170,8 @@ class Writer:
                 self.fi = min(self.fi + 1, len(self.fs) - 1)
                 self.f = self.fs[self.fi]
 
-    def nalloc(self, n: XNode):
-        return self.nalloc_tb[n.ref]
+    def nalloc(self, n: int):
+        return self.nalloc_tb[n]
 
     def write_node(self, n: XNode):
         n_conn = len(n.conns)
@@ -213,17 +210,13 @@ class Reader:
         return i, lat, lon, conns
 
     def read(self):
-        connlist = []
         nodes: list[XNode] = []
         try:
             for i in itertools.count():
                 i, lat, lon, conns = self.read_node(i)
-                nodes.append(XNode(i, lat, lon, set()))
-                connlist.append(conns)
+                nodes.append(XNode(i, lat, lon, set(conns)))
         except EOFError:
             pass
-        for n in nodes:
-            n.conns |= {nodes[ref] for ref in connlist[n.ref]}
         return {n.ref: n for n in nodes}
 
 
@@ -294,6 +287,7 @@ def filternodes(nodes, line: Line):
 @dataclasses.dataclass()
 class AStar:
     def __init__(self, nodes, a: XNode, b: XNode):
+        self.nodes = nodes
         for n in nodes.values():
             n.reset()
         self.line = Line(a.pos, b.pos)
@@ -311,7 +305,8 @@ class AStar:
                 self.closed.add(curr)
                 if curr == self.dest:
                     break
-                for nh in curr.conns:
+                for nhr in curr.conns:
+                    nh = self.nodes[nhr]
                     if nh in self.closed or nh == curr:
                         continue
                     nh.set_prev_maybe(self, curr)
