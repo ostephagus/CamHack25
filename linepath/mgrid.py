@@ -59,7 +59,7 @@ def best_subset_assignment(A, B, optimize_scale=True):
     print("Optimising for scale")
     if optimize_scale:
         # Optimize the scale factor to minimize mean matching error
-        res = minimize_scalar(mean_error_for_scale, bounds=(0.001, 200), method='bounded')
+        res = minimize_scalar(mean_error_for_scale, bounds=(0.001, 700), method='bounded')
         best_scale = res.x
     else:
         best_scale = 1.0
@@ -106,14 +106,16 @@ def MolToGrid(atom_json):
             break
 
     pairs = set()
+    ll_to_at = {}
     for i, (lat, lng) in enumerate(albPoints.tolist()):
         atom_json[i]['alb'] = lat, lng
+        ll_to_at[(lat, lng)] = atom_json[i]["element"]
     for a in atom_json:
         for idx_s in a["bonds"]:
             bi = int(idx_s)
             b = atom_json[bi]
             pairs.add(frozenset((a['alb'], b['alb'])))
-    return pairs
+    return pairs, ll_to_at
 
 
 if __name__ == '__main__':
