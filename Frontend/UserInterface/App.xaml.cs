@@ -27,7 +27,8 @@ namespace UserInterface
         private void Application_Startup(object sender, StartupEventArgs e)
         {
             mainWindow = new MainWindow();
-            // Figure out how to start the python process here.
+            pythonManager = new($"{ProjectInfo.BuildInfo.SolutionDir}/../wrapper_server.py");
+            pythonManager.StartProcess();
 
             //currentMolecule = "";
             //searchResults = new List<string>();
@@ -45,6 +46,10 @@ namespace UserInterface
             mainWindow.SetView(currentControl);
         }
 
+        private void Application_Exit(object sender, ExitEventArgs e)
+        {
+            pythonManager.StopProcess();
+        }
     }
 
 }
