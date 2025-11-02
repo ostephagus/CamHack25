@@ -4,6 +4,7 @@ using System.Windows;
 using System.Windows.Controls;
 using UserInterface.Views;
 using UserInterface.ViewModels;
+using System.Diagnostics;
 
 namespace UserInterface
 {
@@ -12,15 +13,26 @@ namespace UserInterface
     /// </summary>
     public partial class App : Application
     {
+#pragma warning disable CS8618
         MainWindow mainWindow;
         private UserControl currentControl;
         private ViewModelBase currentViewModel;
+        private PythonManager pythonManager;
+        //private string currentMolecule;
+        //private List<string> searchResults;
+#pragma warning restore CS8618
+
+        public PythonManager PythonManager => pythonManager;
 
         private void Application_Startup(object sender, StartupEventArgs e)
         {
             mainWindow = new MainWindow();
+            // Figure out how to start the python process here.
 
-            SwitchWindow(new Views.SearchScreen(), new SearchScreenVM(new Commands.SearchCommand(this)));
+            //currentMolecule = "";
+            //searchResults = new List<string>();
+
+            SwitchWindow(new SearchScreen(), new SearchScreenVM(new Commands.SearchCommand(this)));
 
             mainWindow.Show();
         }
@@ -32,6 +44,7 @@ namespace UserInterface
             currentControl.DataContext = currentViewModel;
             mainWindow.SetView(currentControl);
         }
+
     }
 
 }

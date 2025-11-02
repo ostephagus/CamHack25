@@ -13,18 +13,18 @@ namespace UserInterface.Commands
 {
     public class SubmitCommand : ICommand
     {
-        SearchResultsScreenVM parentViewModel;
+        PythonManager pythonManager;
 
-        public SubmitCommand(SearchResultsScreenVM parentViewModel)
+        public SubmitCommand(PythonManager pythonManager)
         {
-            this.parentViewModel = parentViewModel;
+            this.pythonManager = pythonManager;
         }
 
         public event EventHandler? CanExecuteChanged;
 
         public bool CanExecute(object? parameter)
         {
-            return parentViewModel.SelectedMolecule != "";
+            return parameter is not null;
         }
 
         public void OnCanExecuteChanged(object sender, EventArgs e)
@@ -32,26 +32,33 @@ namespace UserInterface.Commands
             CanExecuteChanged?.Invoke(sender, e);
         }
 
+        /// <summary>
+        /// Runs the python script to generate the map.
+        /// </summary>
+        /// <param name="parameter">The name of the molecule to draw, as a <see cref="string"/>.</param>
         public void Execute(object? parameter)
         {
-            string selectedMolecule = parentViewModel.SelectedMolecule;
-            try
+            if (parameter is string selectedMolecule)
             {
-                ProcessStartInfo startInfo = new ProcessStartInfo
+                try
                 {
-                    FileName = "cmd.exe",
-                    Arguments = $"/c python {ProjectInfo.BuildInfo.SolutionDir}/../wrapper.py {selectedMolecule}",
-                    UseShellExecute = true,
-                    CreateNoWindow = false,
-                    WorkingDirectory = $"{ProjectInfo.BuildInfo.SolutionDir}/.."
-                };
-                Process.Start(startInfo);
-                MessageBox.Show("Process started.");
+                    //ProcessStartInfo startInfo = new ProcessStartInfo
+                    //{
+                    //    FileName = "cmd.exe",
+                    //    Arguments = $"/c python {ProjectInfo.BuildInfo.SolutionDir}/../wrapper.py {selectedMolecule}",
+                    //    UseShellExecute = true,
+                    //    CreateNoWindow = false,
+                    //    WorkingDirectory = $"{ProjectInfo.BuildInfo.SolutionDir}/.."
+                    //};
+                    //Process.Start(startInfo);
+                    //MessageBox.Show("Process started.");
 
-            }
-            catch (Exception e)
-            {
-                MessageBox.Show($"Execution of python script failed: {e.Message}");
+                    pythonManager.DrawMolecule(selectedMolecule);
+                }
+                catch (Exception e)
+                {
+                    MessageBox.Show($"Execution of python script failed: {e.Message}");
+                }
             }
         }
     }
