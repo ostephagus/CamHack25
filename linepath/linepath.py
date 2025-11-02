@@ -2,12 +2,16 @@ from __future__ import annotations
 
 import dataclasses
 import itertools
+import json
 # import heapq
 import math
+import string
 import struct
 import time
 import typing
+import webbrowser
 from dataclasses import field
+from pathlib import Path
 
 import pqdict
 from typing import TYPE_CHECKING
@@ -134,7 +138,7 @@ def parse_way(w: Element):
     for ch in w:
         if ch.tag == 'nd':
             cn.add(nodes[int(ch.get('ref'))])
-        if ch.tag == 'tag' and ch.get('k') == 'highway':
+        if ch.tag == 'tag' and ch.get('k') == 'highway' and ch.get('v') != 'footway':
             ishwy = True
     if ishwy:
         for n in cn:
@@ -307,15 +311,60 @@ class AStar:
         return path[::-1]
 
 
-t3 = time.time()
-print('Finding a path...')
-INST = AStar(Line((35.1877936, -106.6667822), (35.1266192, -106.6150654)))  # TODO!!!!!!!
-result = INST.run()
-print(*[(n.lat, n.lon) for n in result], sep=',', end='\n\n\n')
-with open('_temp_result.txt', 'w') as f:
-    i = 0
-    while i < len(result):
-        print(f'[{",".join([repr((n.lat, n.lon)) for n in result[i:i+998]])}]', file=f)
-        i += 998
-t4 = time.time()
-print(f'Found path in {t4 - t3:.2f}s')
+def findpath(line: Line):
+    return AStar(line).run()
+
+
+HTDOC = '''
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""></script>
+  <style>
+    #map { height: 600px; }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <script>
+    var map = L.map('map').setView([35.126086394372976, -106.5941619873047], 12);
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+    var latlngs = %(path)s;
+    var polyline = L.polyline(latlngs, {color: 'red'}).addTo(map);
+    var polyline = L.polyline([latlngs[0], latlngs.at(-1)], {color: 'blue', dashArray: '4,10'}).addTo(map);
+  </script>
+</body>
+</html>
+'''
+
+
+def main():
+    t3 = time.time()
+    result = findpath(Line((35.082456, -106.606479), (35.141165, -106.537356)))
+    print(*[(n.lat, n.lon) for n in result], sep=',', end='\n\n')
+    print(*[[n.lat, n.lon] for n in result], sep=',', end='\n\n')
+    with open('_temp_result.txt', 'w') as f:
+        i = 0
+        while i < len(result):
+            print(f'[{",".join([repr((n.lat, n.lon)) for n in result[i:i + 998]])}]', file=f)
+            i += 998
+    hd = HTDOC % {'path': json.dumps([(n.lat, n.lon) for n in result])}
+    with open('__result.html', 'w') as f:
+        f.write(hd)
+    t4 = time.time()
+    print(f'Found path in {t4 - t3:.2f}s')
+    webbrowser.open(Path('__result.html').absolute().as_uri())
+
+
+if __name__ == '__main__':
+    main()
