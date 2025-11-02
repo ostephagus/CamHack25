@@ -26,6 +26,7 @@ if TYPE_CHECKING:
 else:
     from lxml.etree import parse
 
+UPDATE = False
 
 # weighting for the 'distance from straight line' part of heuristic
 ALPHA_H = 2
@@ -140,7 +141,7 @@ class XNode:
         return self.ref, self.lat, self.lon, {n.ref for n in self.conns}
 
 
-def parse_way(w: Element):
+def parse_way(nodes, w: Element):
     cn: set[XNode] = set()
     ishwy = False
     for ch in w:
@@ -226,46 +227,49 @@ class Reader:
         return {n.ref: n for n in nodes}
 
 
-UPDATE = False
 
-if UPDATE:
-    t0 = time.perf_counter()
-    with open(R / 'albuquerque.xml', 'rb') as f:
-        t = parse(f).getroot()
-    nodes: dict[int, XNode] = {}
-    for i, a in enumerate(t):
-        a: Element
-        if a.tag == 'node':
-            ref = int(a.get('id'))
-            nodes[ref] = XNode(ref,
-                               float(a.get('lat')),
-                               float(a.get('lon')),
-                               set())
-        if a.tag == 'way':
-            parse_way(a)
-        if i % 100000 == 0:
-            print(i)
-    del t, i, a, f
-    nodes = {k: n for k, n in nodes.items() if n.conns}
-    t1 = time.perf_counter()
-    print(t1 - t0)
-    print(len(nodes))
 
-    print('Writing...')
-    t5 = time.time()
-    with (open(R / 'linepath/.nodes-cache-0.bin', 'wb') as f0,
-          open(R / 'linepath/.nodes-cache-1.bin', 'wb') as f1):
-        Writer(f0, f1).write([*nodes.values()])
-    t6 = time.time()
-    print(f'Written in {t6 - t5:.2f}s')
-else:
-    print('Reading Albuquerque...')
-    t5 = time.time()
-    with (open(R / 'linepath/.nodes-cache-0.bin', 'rb') as f0,
-          open(R / 'linepath/.nodes-cache-1.bin', 'rb') as f1):
-        nodes = Reader(f0, f1).read()
-    t6 = time.time()
-    print(f'Read in {t6 - t5:.2f}s')
+def load_nodes(xml: str):
+    extra = '' if xml == 'albuquerque.xml' else f'-{xml.removesuffix(".xml")}'
+    if UPDATE:
+        t0 = time.perf_counter()
+        with open(R / xml, 'rb') as f:
+            t = parse(f).getroot()
+        nodes: dict[int, XNode] = {}
+        for i, a in enumerate(t):
+            a: Element
+            if a.tag == 'node':
+                ref = int(a.get('id'))
+                nodes[ref] = XNode(ref,
+                                   float(a.get('lat')),
+                                   float(a.get('lon')),
+                                   set())
+            if a.tag == 'way':
+                parse_way(nodes, a)
+            if i % 100000 == 0:
+                print(i)
+        del t, i, a, f
+        nodes = {k: n for k, n in nodes.items() if n.conns}
+        t1 = time.perf_counter()
+        print(t1 - t0)
+        print(len(nodes))
+
+        print('Writing...')
+        t5 = time.time()
+        with (open(R / f'linepath/.nodes-cache{extra}-0.bin', 'wb') as f0,
+              open(R / f'linepath/.nodes-cache{extra}-1.bin', 'wb') as f1):
+            Writer(f0, f1).write([*nodes.values()])
+        t6 = time.time()
+        print(f'Written in {t6 - t5:.2f}s')
+    else:
+        print('Reading Albuquerque...')
+        t5 = time.time()
+        with (open(R / f'linepath/.nodes-cache{extra}-0.bin', 'rb') as f0,
+              open(R / f'linepath/.nodes-cache{extra}-1.bin', 'rb') as f1):
+            nodes = Reader(f0, f1).read()
+        t6 = time.time()
+        print(f'Read in {t6 - t5:.2f}s')
+    return nodes
 
 
 def findnode(fns, lat: float, lon: float):
@@ -280,7 +284,7 @@ def findnode(fns, lat: float, lon: float):
     return b
 
 
-def filternodes(line: Line):
+def filternodes(nodes, line: Line):
     maxdist = max(line.length() / 4, 0.001)  # TODO adjust?
     nds = {k: n for k, n in nodes.items()
            if line.dist((n.lat, n.lon)) < maxdist}
@@ -291,7 +295,7 @@ def filternodes(line: Line):
 
 @dataclasses.dataclass()
 class AStar:
-    def __init__(self, a: XNode, b: XNode):
+    def __init__(self, nodes, a: XNode, b: XNode):
         for n in nodes.values():
             n.reset()
         self.line = Line(a.pos, b.pos)
@@ -327,8 +331,8 @@ class AStar:
         return path[::-1]
 
 
-def findpath(a: XNode, b: XNode):
-    return AStar(a, b).run()
+def findpath(nodes, a: XNode, b: XNode):
+    return AStar(nodes, a, b).run()
 
 
 HTDOC = '''
@@ -370,9 +374,21 @@ HTDOC = '''
 '''
 
 
-def find_paths(data):
+NODE_MEM = {}
+
+
+def place_to_xml(place):
+    return place.lower().removeprefix('.xml') + '.xml'
+
+
+def find_paths(place, data):
     paths: set[frozenset[tuple[float, float]]]
-    paths, ll2elem = mgrid.MolToGrid(data)
+    xml = place_to_xml(place)
+    if place in NODE_MEM:
+        nodes = NODE_MEM[xml]
+    else:
+        nodes = NODE_MEM[xml] = load_nodes(xml)
+    paths, ll2elem = mgrid.MolToGrid(data, is_cam=xml=='cambridge.xml')
     print('Converting nodes...')
     point_to_xnode = {}
     xn_to_elem: dict[XNode, int] = {}
@@ -385,16 +401,16 @@ def find_paths(data):
     results = []
     els = [(xn.pos, str(xn_to_elem[xn])) for xn in xn_to_elem.keys()]
     for i, (st, ed) in enumerate(paths):
-        path = findpath(point_to_xnode[st], point_to_xnode[ed])
+        path = findpath(nodes, point_to_xnode[st], point_to_xnode[ed])
         results.append(path)
         if i % 10:
             print(f'Finding path... {(i + 1) / len(paths)*100:.0f}%')
     return results, els
 
 
-def run(j):
+def run(j, place='albuquerque'):
     t3 = time.time()
-    results, els = find_paths(j)
+    results, els = find_paths(place, j)
     hd = HTDOC % {'paths': json.dumps([[(n.lat, n.lon) for n in r] for r in results]),
                   'els': json.dumps(els)}
     with open('__result.html', 'w') as f:
@@ -408,7 +424,7 @@ def main():
     t3 = time.time()
     with open('./sample_data_graphene.json') as f:
         j = json.load(f)
-    results, els = find_paths(j)
+    results, els = find_paths('albuquerque', j)
     # result = findpath(Line((35.082456, -106.606479), (35.141165, -106.537356)))
     # print(*[(n.lat, n.lon) for r in results for n in r], sep=',', end='\n\n')
     # print(*[[n.lat, n.lon] for r in results for n in r], sep=',', end='\n\n')

@@ -81,7 +81,7 @@ def best_subset_assignment(A, B, optimize_scale=True):
     return subset, mean_error
 
 
-def MolToGrid(atom_json):
+def MolToGrid(atom_json, is_cam=False):
     # How much error we're willing to accept between the road intersections and the molecule
     acceptableError = 0.05
 
@@ -93,7 +93,9 @@ def MolToGrid(atom_json):
     while True:
         print(f"Tolerance: {tolerance}")
         print("reading")
-        gridCoords = np.loadtxt(R / f"MolToGrid/filtereds/albNPFiltered{tolerance}.txt", dtype=float)
+        p = f"MolToGrid/filtereds/albNPFiltered{tolerance}.txt" if not is_cam \
+            else "MolToGrid/cambNP.txt"
+        gridCoords = np.loadtxt(R / p, dtype=float)
         print("done reading")
 
         inputCoords = []
