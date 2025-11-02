@@ -268,10 +268,10 @@ else:
     print(f'Read in {t6 - t5:.2f}s')
 
 
-def findnode(fns, lat: int, lon: int):
+def findnode(fns, lat: float, lon: float):
     b = None
     bd = 1e10
-    for n in fns.values():
+    for n in fns:
         cd = math.hypot(n.lat - lat, n.lon - lon)
         if b is None or cd < bd:
             bd = cd
@@ -302,21 +302,24 @@ class AStar:
         self.open = pqdict.pqdict.minpq({self.start: self.start.fcosti(self)})
         self.closed = set()
 
-
     def run(self) -> list[XNode]:  # TODO this is slow!
-        while True:
-            curr: XNode = self.open.pop()
-            self.closed.add(curr)
-            if curr == self.dest:
-                break
-            for nh in curr.conns:
-                if nh in self.closed or nh == curr:
-                    continue
-                nh.set_prev_maybe(self, curr)
-                self.open[nh] = nh.fcosti(self)  # Update or add
+        try:
+            while True:
+                curr: XNode = self.open.pop()
+                self.closed.add(curr)
+                if curr == self.dest:
+                    break
+                for nh in curr.conns:
+                    if nh in self.closed or nh == curr:
+                        continue
+                    nh.set_prev_maybe(self, curr)
+                    self.open[nh] = nh.fcosti(self)  # Update or add
+        except pqdict.Empty:
+            end = findnode(self.closed, self.dest.lat, self.dest.lon)
+        else:
+            end = self.dest
         path = []
         pset = set()
-        end = self.dest
         while end and end not in pset:
             path.append(end)
             pset.add(end)
@@ -342,7 +345,7 @@ HTDOC = '''
     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
     crossorigin=""></script>
   <style>
-    #map { height: 600px; }
+    #map { height: 1000px; }
   </style>
 </head>
 <body>
@@ -353,10 +356,14 @@ HTDOC = '''
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
     }).addTo(map);
     var pts = %(paths)s;
+    var els = %(els)s;
     for (const latlngs of pts) {
       var polyline = L.polyline(latlngs, {color: 'red'}).addTo(map);
       //var polyline = L.polyline([latlngs[0], latlngs.at(-1)], {color: 'blue', dashArray: '4,10'}).addTo(map);
     }
+    //for (const [latlng, text] of els) {
+    //  L.tooltip({className:'qwerty'}).setLatLng(latlng).setContent(text).addTo(map);
+    //}
   </script>
 </body>
 </html>
@@ -364,25 +371,32 @@ HTDOC = '''
 
 
 def find_paths(data):
-    paths: set[frozenset[tuple[float, float]]] = mgrid.MolToGrid(data)
+    paths: set[frozenset[tuple[float, float]]]
+    paths, ll2elem = mgrid.MolToGrid(data)
     print('Converting nodes...')
     point_to_xnode = {}
+    xn_to_elem: dict[XNode, int] = {}
     for crd in [q for w in paths for q in w]:
         if crd not in point_to_xnode:
-            point_to_xnode[crd] = findnode(nodes, *crd)
+            xnode = findnode(nodes.values(), *crd)
+            point_to_xnode[crd] = xnode
+            xn_to_elem[xnode] = ll2elem[crd]
     print('Finding path... 0%')
     results = []
+    els = [(xn.pos, str(xn_to_elem[xn])) for xn in xn_to_elem.keys()]
     for i, (st, ed) in enumerate(paths):
-        results.append(findpath(point_to_xnode[ed], point_to_xnode[st]))
-        if i % 5:
+        path = findpath(point_to_xnode[st], point_to_xnode[ed])
+        results.append(path)
+        if i % 10:
             print(f'Finding path... {(i + 1) / len(paths)*100:.0f}%')
-    return results
+    return results, els
 
 
 def run(j):
     t3 = time.time()
-    results = find_paths(j)
-    hd = HTDOC % {'paths': json.dumps([[(n.lat, n.lon) for n in r] for r in results])}
+    results, els = find_paths(j)
+    hd = HTDOC % {'paths': json.dumps([[(n.lat, n.lon) for n in r] for r in results]),
+                  'els': json.dumps(els)}
     with open('__result.html', 'w') as f:
         f.write(hd)
     t4 = time.time()
@@ -394,7 +408,7 @@ def main():
     t3 = time.time()
     with open('./sample_data_graphene.json') as f:
         j = json.load(f)
-    results = find_paths(j)
+    results, els = find_paths(j)
     # result = findpath(Line((35.082456, -106.606479), (35.141165, -106.537356)))
     # print(*[(n.lat, n.lon) for r in results for n in r], sep=',', end='\n\n')
     # print(*[[n.lat, n.lon] for r in results for n in r], sep=',', end='\n\n')
@@ -403,7 +417,8 @@ def main():
     #     while i < len(result):
     #         print(f'[{",".join([repr((n.lat, n.lon)) for n in result[i:i + 998]])}]', file=f)
     #         i += 998
-    hd = HTDOC % {'paths': json.dumps([[(n.lat, n.lon) for n in r] for r in results])}
+    hd = HTDOC % {'paths': json.dumps([[(n.lat, n.lon) for n in r] for r in results]),
+                  'els': json.dumps('els')}
     with open('__result.html', 'w') as f:
         f.write(hd)
     t4 = time.time()
