@@ -60,12 +60,13 @@ def get_coords(full_data: dict):
         a1 = atoms[aid1]
         a2 = atoms[aid2]
         a1.bonds[a2.idx] = a2.bonds[a1.idx] = Bond(order)
-    for aid1, aid2, annot in zip(cs["style"]["aid1"], cs["style"]["aid2"],
-                                 cs["style"]["annotation"]):
-        a1 = atoms[aid1]
-        a2 = atoms[aid2]
-        b = a1.bonds.setdefault(a2.idx, Bond(0))  # and should also be in a2
-        b.style = style_from_annot(annot)
+    if "style" in cs:
+        for aid1, aid2, annot in zip(cs["style"]["aid1"], cs["style"]["aid2"],
+                                     cs["style"]["annotation"]):
+            a1 = atoms[aid1]
+            a2 = atoms[aid2]
+            b = a1.bonds.setdefault(a2.idx, Bond(0))  # and should also be in a2
+            b.style = style_from_annot(annot)
     return [dataclasses.asdict(d) for d in atoms.values()]
 
 
