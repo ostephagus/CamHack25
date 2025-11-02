@@ -1,10 +1,7 @@
-﻿using System.Configuration;
-using System.Data;
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Controls;
 using UserInterface.Views;
 using UserInterface.ViewModels;
-using System.Diagnostics;
 
 namespace UserInterface
 {
@@ -27,7 +24,7 @@ namespace UserInterface
         private void Application_Startup(object sender, StartupEventArgs e)
         {
             mainWindow = new MainWindow();
-            pythonManager = new($"{ProjectInfo.BuildInfo.SolutionDir}/../wrapper_server.py");
+            pythonManager = new($"{Paths.BaseDirectory}/../wrapper_server.py");
             pythonManager.StartProcess();
 
             //currentMolecule = "";

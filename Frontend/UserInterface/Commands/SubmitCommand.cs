@@ -42,18 +42,8 @@ namespace UserInterface.Commands
             {
                 try
                 {
-                    //ProcessStartInfo startInfo = new ProcessStartInfo
-                    //{
-                    //    FileName = "cmd.exe",
-                    //    Arguments = $"/c python {ProjectInfo.BuildInfo.SolutionDir}/../wrapper.py {selectedMolecule}",
-                    //    UseShellExecute = true,
-                    //    CreateNoWindow = false,
-                    //    WorkingDirectory = $"{ProjectInfo.BuildInfo.SolutionDir}/.."
-                    //};
-                    //Process.Start(startInfo);
-                    //MessageBox.Show("Process started.");
-
                     pythonManager.DrawMolecule(selectedMolecule);
+                    MessageBox.Show("Calculating map in the background.");
                 }
                 catch (Exception e)
                 {

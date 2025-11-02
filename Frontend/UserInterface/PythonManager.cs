@@ -1,10 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace UserInterface
 {
@@ -26,7 +21,7 @@ namespace UserInterface
             {
                 FileName = "python",
                 Arguments = scriptPath,
-                WorkingDirectory = $"{ProjectInfo.BuildInfo.SolutionDir}/..",
+                WorkingDirectory = $"{Paths.BaseDirectory}/..",
                 UseShellExecute = false,
                 RedirectStandardInput = true,
                 RedirectStandardOutput = true,
