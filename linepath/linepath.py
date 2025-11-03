@@ -360,8 +360,8 @@ HTDOC = '''
     }).addTo(map);
     var pts = %(paths)s;
     var els = %(els)s;
-    for (const latlngs of pts) {
-      var polyline = L.polyline(latlngs, {color: 'black', weight: 4}).addTo(map);
+    for (const [latlngs, order] of pts) {
+      var polyline = L.polyline(latlngs, {color: 'black', weight: order * 3}).addTo(map);
       //var polyline = L.polyline([latlngs[0], latlngs.at(-1)], {color: 'blue', dashArray: '4,10'}).addTo(map);
     }
     for (const [latlng, color, w] of els) {
@@ -383,28 +383,23 @@ def place_to_xml(place):
 def find_paths(place, data):
     with open("linepath/cpk.json") as f:
         element_colour_map = json.load(f)
-    paths: set[frozenset[tuple[float, float]]]
     xml = place_to_xml(place)
     nodes = load_nodes(xml)
     paths, ll2elem = mgrid.MolToGrid(data, is_cam=xml=='cambridge.xml')
     print('Converting nodes...')
     point_to_xnode = {}
     xn_to_elem: dict[XNode, int] = {}
-    for crd in [q for w in paths for q in w]:
+    for crd in [q for w in paths for q in w[1]]:
         if crd not in point_to_xnode:
             xnode = findnode(nodes.values(), *crd)
             point_to_xnode[crd] = xnode
             xn_to_elem[xnode] = ll2elem[crd]
     print('Finding path... 0%')
     results = []
-    # TODO: replace str(...) with color
     els = [(xn.pos, f"rgb({element_colour_map[str(xn_to_elem[xn])][0]}, {element_colour_map[str(xn_to_elem[xn])][1]}, {element_colour_map[str(xn_to_elem[xn])][2]})", xn_to_elem[xn]) for xn in xn_to_elem.keys()]
-    # print("")
-    # print(els)
-    # input("")
-    for i, (st, ed) in enumerate(paths):
+    for i, (order, (st, ed)) in enumerate(paths):
         path = findpath(nodes, point_to_xnode[st], point_to_xnode[ed])
-        results.append(path)
+        results.append((path, order))
         if i % 10:
             print(f'Finding path... {(i + 1) / len(paths)*100:.0f}%')
     return results, els
@@ -413,8 +408,10 @@ def find_paths(place, data):
 def run(j, place='albuquerque'):
     t3 = time.time()
     results, els = find_paths(place, j)
-    hd = HTDOC % {'paths': json.dumps([[(n.lat, n.lon) for n in r] for r in results]),
-                  'els': json.dumps(els)}
+    hd = HTDOC % {
+        'paths': json.dumps([([(n.lat, n.lon) for n in r[0]], r[1])
+                             for r in results]),
+        'els': json.dumps(els)}
     with open('__result.html', 'w') as f:
         f.write(hd)
     t4 = time.time()

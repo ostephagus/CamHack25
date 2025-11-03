@@ -107,16 +107,16 @@ def MolToGrid(atom_json, is_cam=False):
         if error < acceptableError:
             break
 
-    pairs = set()
+    pairs: set[tuple[int, frozenset[tuple[float, float]]]] = set()
     ll_to_at = {}
     for i, (lat, lng) in enumerate(albPoints.tolist()):
         atom_json[i]['alb'] = lat, lng
         ll_to_at[(lat, lng)] = atom_json[i]["element"]
     for a in atom_json:
-        for idx_s in a["bonds"]:
+        for idx_s, bdata in a["bonds"].items():
             bi = int(idx_s)
             b = atom_json[bi]
-            pairs.add(frozenset((a['alb'], b['alb'])))
+            pairs.add((bdata["order"], frozenset((a['alb'], b['alb']))))
     return pairs, ll_to_at
 
 
